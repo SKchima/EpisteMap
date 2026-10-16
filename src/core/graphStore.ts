@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { applyNodeChanges, applyEdgeChanges, addEdge as rfAddEdge } from '@xyflow/react'
-import type { EpistemapState, EpistemeNode, EpistemeEdge, BreadcrumbItem, EpistemeNodeData } from './types'
+import type { EpistemapStore, KnowledgeNode, KnowledgeEdge } from './types'
+import { getSubtreeIds, canReparent, sanitizeGraph } from './graph'
+import { findFreePosition, applyDagreLayout } from './layout'
 
 function generateId(): string {
   return 'node_' + Math.random().toString(36).substring(2, 9)
@@ -10,195 +11,147 @@ function generateEdgeId(): string {
   return 'edge_' + Math.random().toString(36).substring(2, 9)
 }
 
-// Retorna todos os IDs descendentes de um conjunto de nós (recursivo)
-function getAllDescendantIds(nodes: EpistemeNode[], parentIds: Set<string>): Set<string> {
-  const allIds = new Set<string>(parentIds)
-  let addedMore = true
-
-  while (addedMore) {
-    addedMore = false
-    for (const node of nodes) {
-      if (node.parentId && allIds.has(node.parentId) && !allIds.has(node.id)) {
-        allIds.add(node.id)
-        addedMore = true
-      }
-    }
-  }
-
-  return allIds
-}
-
-export const useGraphStore = create<EpistemapState>((set, get) => ({
+export const useGraphStore = create<EpistemapStore>((set, get) => ({
   nodes: [],
   edges: [],
-  selectedNodeId: null,
-  focusNodeId: null,
+  selectedId: null,
+  focusId: null,
 
-  onNodesChange: (changes) => {
-    set((state) => ({
-      nodes: applyNodeChanges(changes, state.nodes),
-    }))
-  },
+  addRootNode: (title = 'Novo Conceito', position) => {
+    const state = get()
+    const id = generateId()
+    const freePos = position || findFreePosition(state.nodes, { x: 100, y: 100 })
 
-  onEdgesChange: (changes) => {
-    set((state) => ({
-      edges: applyEdgeChanges(changes, state.edges),
-    }))
-  },
-
-  onConnect: (connection) => {
-    set((state) => ({
-      edges: rfAddEdge(
-        { ...connection, animated: true, id: generateEdgeId() },
-        state.edges
-      ),
-    }))
-  },
-
-  addNode: (nodeData) => {
-    const id = nodeData.id || generateId()
-    const nodeDataObj: EpistemeNodeData = {
-      title: nodeData.data?.title || 'Novo Conceito',
-      description: nodeData.data?.description || '',
-      tags: nodeData.data?.tags || [],
-      isExpanded: nodeData.data?.isExpanded !== undefined ? nodeData.data.isExpanded : true,
-      ...(nodeData.data || {}),
-    }
-
-    const newNode: EpistemeNode = {
-      ...nodeData,
+    const newNode: KnowledgeNode = {
       id,
-      type: nodeData.type || 'compound',
-      data: nodeDataObj,
+      parentId: null,
+      position: freePos,
+      data: {
+        title,
+        description: '',
+        tags: [],
+        color: null,
+        collapsed: false,
+      },
     }
 
-    set((state) => ({
+    set({
       nodes: [...state.nodes, newNode],
-      selectedNodeId: id,
-    }))
+      selectedId: id,
+    })
 
     return id
   },
 
   addSubNode: (parentId, title = 'Novo Sub-objeto') => {
     const state = get()
-    const parentNode = state.nodes.find((n) => n.id === parentId)
-    if (!parentNode) {
+    const parent = state.nodes.find((n) => n.id === parentId)
+    if (!parent) {
       throw new Error(`Nó pai com id "${parentId}" não foi encontrado.`)
     }
 
-    // Conta quantos filhos imediatos já existem para calcular um deslocamento relativo
-    const existingChildren = state.nodes.filter((n) => n.parentId === parentId)
-    const childOffset = {
-      x: 30 + (existingChildren.length % 2) * 160,
-      y: 60 + Math.floor(existingChildren.length / 2) * 90,
-    }
-
-    const subNodeId = generateId()
-    const subNode: EpistemeNode = {
-      id: subNodeId,
-      type: 'compound',
+    const id = generateId()
+    const newNode: KnowledgeNode = {
+      id,
       parentId,
-      extent: 'parent',
-      position: childOffset,
+      position: { x: 0, y: 0 },
       data: {
         title,
         description: '',
-        tags: [...(parentNode.data.tags || [])],
-        parentId,
-        isExpanded: true,
+        tags: [...parent.data.tags],
+        color: null,
+        collapsed: false,
       },
     }
 
-    set((s) => ({
+    set({
       nodes: [
-        ...s.nodes.map((n) =>
-          n.id === parentId
-            ? { ...n, data: { ...n.data, isExpanded: true } }
-            : n
+        ...state.nodes.map((n) =>
+          n.id === parentId ? { ...n, data: { ...n.data, collapsed: false } } : n
         ),
-        subNode,
+        newNode,
       ],
-      selectedNodeId: subNodeId,
-    }))
+      selectedId: id,
+    })
 
-    return subNodeId
+    return id
   },
 
-  updateNodeData: (id, partialData) => {
+  updateNode: (id, partial) => {
     set((state) => ({
-      nodes: state.nodes.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              ...partialData,
-            },
-          }
-        }
-        return node
-      }),
+      nodes: state.nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, ...partial } } : n
+      ),
     }))
   },
 
-  updateNodePosition: (id, position) => {
+  updateRootPosition: (id, position) => {
     set((state) => ({
-      nodes: state.nodes.map((node) => (node.id === id ? { ...node, position } : node)),
+      nodes: state.nodes.map((n) => (n.id === id ? { ...n, position } : n)),
     }))
   },
 
   removeNode: (id) => {
     const state = get()
-    const idsToRemove = getAllDescendantIds(state.nodes, new Set([id]))
+    const subtree = getSubtreeIds(state.nodes, id)
 
-    set((s) => ({
-      nodes: s.nodes.filter((node) => !idsToRemove.has(node.id)),
-      edges: s.edges.filter(
-        (edge) => !idsToRemove.has(edge.source) && !idsToRemove.has(edge.target)
-      ),
-      selectedNodeId: idsToRemove.has(s.selectedNodeId ?? '') ? null : s.selectedNodeId,
-      focusNodeId: idsToRemove.has(s.focusNodeId ?? '') ? null : s.focusNodeId,
-    }))
-  },
-
-  toggleNodeExpansion: (id) => {
-    set((state) => ({
-      nodes: state.nodes.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              isExpanded: !node.data.isExpanded,
-            },
-          }
-        }
-        return node
-      }),
-    }))
-  },
-
-  addEdge: (edge) => {
-    const id = edge.id || generateEdgeId()
-    const newEdge: EpistemeEdge = {
-      id,
-      source: edge.source,
-      target: edge.target,
-      label: edge.label,
-      animated: edge.animated,
+    let newFocusId = state.focusId
+    if (state.focusId && subtree.has(state.focusId)) {
+      const removedTarget = state.nodes.find((n) => n.id === id)
+      newFocusId = removedTarget?.parentId || null
     }
 
-    set((state) => {
-      // Evita duplicatas exatas de source e target
-      const exists = state.edges.some(
-        (e) => e.source === edge.source && e.target === edge.target
-      )
-      if (exists) return state
-      return {
-        edges: [...state.edges, newEdge],
-      }
+    set({
+      nodes: state.nodes.filter((n) => !subtree.has(n.id)),
+      edges: state.edges.filter(
+        (e) => !subtree.has(e.source) && !subtree.has(e.target)
+      ),
+      selectedId: state.selectedId && subtree.has(state.selectedId) ? null : state.selectedId,
+      focusId: newFocusId,
     })
+  },
+
+  reparentNode: (id, newParentId) => {
+    const state = get()
+    if (!canReparent(state.nodes, id, newParentId)) {
+      return false
+    }
+
+    set({
+      nodes: state.nodes.map((n) => {
+        if (n.id !== id) return n
+        return {
+          ...n,
+          parentId: newParentId,
+        }
+      }),
+    })
+
+    return true
+  },
+
+  toggleCollapse: (id) => {
+    set((state) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, collapsed: !n.data.collapsed } } : n
+      ),
+    }))
+  },
+
+  addEdge: (source, target, label = '') => {
+    if (source === target) return ''
+    const state = get()
+    const exists = state.edges.some((e) => e.source === source && e.target === target)
+    if (exists) return ''
+
+    const id = generateEdgeId()
+    const newEdge: KnowledgeEdge = { id, source, target, label }
+
+    set({
+      edges: [...state.edges, newEdge],
+    })
+
+    return id
   },
 
   removeEdge: (edgeId) => {
@@ -207,83 +160,27 @@ export const useGraphStore = create<EpistemapState>((set, get) => ({
     }))
   },
 
-  selectNode: (id) => {
-    set({ selectedNodeId: id })
+  select: (id) => {
+    set({ selectedId: id })
   },
 
-  setFocusNode: (id) => {
-    set({ focusNodeId: id })
+  setFocus: (id) => {
+    set({ focusId: id })
   },
 
-  getBreadcrumbs: () => {
-    const { nodes, focusNodeId } = get()
-    const trail: BreadcrumbItem[] = [{ id: null, title: 'Visão Geral' }]
-
-    if (!focusNodeId) {
-      return trail
-    }
-
-    const nodeMap = new Map<string, EpistemeNode>()
-    for (const node of nodes) {
-      nodeMap.set(node.id, node)
-    }
-
-    const chain: BreadcrumbItem[] = []
-    let currentId: string | undefined = focusNodeId
-
-    while (currentId) {
-      const node = nodeMap.get(currentId)
-      if (!node) break
-      chain.unshift({ id: node.id, title: node.data.title })
-      currentId = node.parentId
-    }
-
-    return [...trail, ...chain]
+  organizeMap: () => {
+    set((state) => ({
+      nodes: applyDagreLayout(state.nodes, state.edges),
+    }))
   },
 
-  getVisibleElements: () => {
-    const { nodes, edges, focusNodeId } = get()
-
-    if (focusNodeId === null) {
-      // Modo global: Nós raiz sempre visíveis; nós filhos visíveis se o pai estiver expandido
-      const nodeMap = new Map<string, EpistemeNode>(nodes.map((n) => [n.id, n]))
-      
-      const isVisible = (node: EpistemeNode): boolean => {
-        if (!node.parentId) return true
-        let currentParent = nodeMap.get(node.parentId)
-        while (currentParent) {
-          if (!currentParent.data.isExpanded) return false
-          currentParent = currentParent.parentId ? nodeMap.get(currentParent.parentId) : undefined
-        }
-        return true
-      }
-
-      const visibleNodes = nodes.filter(isVisible)
-      const visibleNodeIds = new Set(visibleNodes.map((n) => n.id))
-      const visibleEdges = edges.filter(
-        (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)
-      )
-
-      return { nodes: visibleNodes, edges: visibleEdges }
-    }
-
-    // Modo Drill-down focado em um nó
-    const descendants = getAllDescendantIds(nodes, new Set([focusNodeId]))
-    const visibleNodes = nodes.filter((n) => descendants.has(n.id))
-    const visibleNodeIds = new Set(visibleNodes.map((n) => n.id))
-    const visibleEdges = edges.filter(
-      (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)
-    )
-
-    return { nodes: visibleNodes, edges: visibleEdges }
-  },
-
-  loadGraph: (nodes, edges) => {
+  loadGraph: (graph) => {
+    const sanitized = sanitizeGraph(graph)
     set({
-      nodes,
-      edges,
-      selectedNodeId: null,
-      focusNodeId: null,
+      nodes: sanitized.nodes,
+      edges: sanitized.edges,
+      selectedId: null,
+      focusId: null,
     })
   },
 
@@ -291,8 +188,8 @@ export const useGraphStore = create<EpistemapState>((set, get) => ({
     set({
       nodes: [],
       edges: [],
-      selectedNodeId: null,
-      focusNodeId: null,
+      selectedId: null,
+      focusId: null,
     })
   },
 }))

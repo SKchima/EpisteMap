@@ -1,50 +1,29 @@
 import React, { useMemo } from 'react'
-import { ChevronRight, Home, Plus, Download, Upload } from 'lucide-react'
+import { ChevronRight, Home, Plus, Download, Upload, LayoutGrid } from 'lucide-react'
 import { useGraphStore } from '../core/graphStore'
-import type { BreadcrumbItem, EpistemeNode } from '../core/types'
+import { getBreadcrumbs } from '../core/graph'
 
 export const BreadcrumbsBar: React.FC = () => {
-  const focusNodeId = useGraphStore((s) => s.focusNodeId)
+  const focusId = useGraphStore((s) => s.focusId)
   const nodes = useGraphStore((s) => s.nodes)
-  const setFocusNode = useGraphStore((s) => s.setFocusNode)
-  const addNode = useGraphStore((s) => s.addNode)
   const edges = useGraphStore((s) => s.edges)
+  const setFocus = useGraphStore((s) => s.setFocus)
+  const addRootNode = useGraphStore((s) => s.addRootNode)
+  const organizeMap = useGraphStore((s) => s.organizeMap)
   const loadGraph = useGraphStore((s) => s.loadGraph)
 
   const breadcrumbs = useMemo(() => {
-    const trail: BreadcrumbItem[] = [{ id: null, title: 'Visão Geral' }]
-    if (!focusNodeId) return trail
-
-    const nodeMap = new Map<string, EpistemeNode>()
-    for (const node of nodes) {
-      nodeMap.set(node.id, node)
-    }
-
-    const chain: BreadcrumbItem[] = []
-    let currentId: string | undefined = focusNodeId
-    while (currentId) {
-      const node = nodeMap.get(currentId)
-      if (!node) break
-      chain.unshift({ id: node.id, title: node.data.title })
-      currentId = node.parentId
-    }
-
-    return [...trail, ...chain]
-  }, [focusNodeId, nodes])
+    return getBreadcrumbs(nodes, focusId)
+  }, [nodes, focusId])
 
   const handleCreateRoot = () => {
-    addNode({
-      position: { x: 250 + Math.random() * 80, y: 150 + Math.random() * 80 },
-      data: {
-        title: 'Nova Área do Conhecimento',
-        description: 'Descreva os princípios fundamentais e subdivida este nó.',
-        tags: ['conceito'],
-      },
-    })
+    addRootNode('Novo Conceito')
   }
 
   const handleExportJSON = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ nodes, edges }, null, 2))
+    const dataStr =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify({ nodes, edges }, null, 2))
     const downloadAnchor = document.createElement('a')
     downloadAnchor.setAttribute('href', dataStr)
     downloadAnchor.setAttribute('download', 'epistemap-export.json')
@@ -61,8 +40,8 @@ export const BreadcrumbsBar: React.FC = () => {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string)
-        if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-          loadGraph(parsed.nodes, parsed.edges)
+        if (parsed && Array.isArray(parsed.nodes)) {
+          loadGraph(parsed)
         } else {
           alert('Arquivo JSON inválido. Estrutura esperada: { nodes: [], edges: [] }')
         }
@@ -93,19 +72,30 @@ export const BreadcrumbsBar: React.FC = () => {
           <span style={{ fontWeight: 700, fontSize: '15px', color: '#818cf8', letterSpacing: '-0.3px' }}>
             Epistemap
           </span>
-          <span style={{ fontSize: '11px', color: '#64748b', border: '1px solid #334155', borderRadius: '4px', padding: '1px 5px' }}>
-            SDD v1.0
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#64748b',
+              border: '1px solid #334155',
+              borderRadius: '4px',
+              padding: '1px 5px',
+            }}
+          >
+            v2.0
           </span>
         </div>
 
-        <nav aria-label="Hierarquia do Mapa" style={{ display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto' }}>
+        <nav
+          aria-label="Hierarquia do Mapa"
+          style={{ display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto' }}
+        >
           {breadcrumbs.map((crumb, idx) => {
             const isLast = idx === breadcrumbs.length - 1
             return (
               <React.Fragment key={crumb.id || 'root'}>
                 {idx > 0 && <ChevronRight size={14} color="#64748b" />}
                 <button
-                  onClick={() => setFocusNode(crumb.id)}
+                  onClick={() => setFocus(crumb.id)}
                   style={{
                     background: isLast ? '#1e2332' : 'transparent',
                     border: isLast ? '1px solid #3b4259' : 'none',
@@ -133,6 +123,27 @@ export const BreadcrumbsBar: React.FC = () => {
 
       {/* Ações Globais */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button
+          onClick={organizeMap}
+          title="Distribuir nós e subgrafos no canvas (Auto-layout Dagre)"
+          style={{
+            background: '#1e2433',
+            color: '#38bdf8',
+            border: '1px solid #2e3e58',
+            borderRadius: '5px',
+            padding: '5px 10px',
+            fontSize: '12px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          <LayoutGrid size={13} />
+          Organizar Mapa
+        </button>
+
         <button
           onClick={handleCreateRoot}
           style={{
@@ -190,7 +201,12 @@ export const BreadcrumbsBar: React.FC = () => {
         >
           <Upload size={13} />
           Importar
-          <input type="file" accept=".json" onChange={handleImportJSON} style={{ display: 'none' }} />
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleImportJSON}
+            style={{ display: 'none' }}
+          />
         </label>
       </div>
     </header>

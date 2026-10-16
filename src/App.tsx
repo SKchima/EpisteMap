@@ -5,105 +5,167 @@ import {
   Background,
   MiniMap,
   BackgroundVariant,
-  type NodeMouseHandler,
+  type Connection,
+  type Node as RFNode,
+  type OnNodeDrag,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import 'katex/dist/katex.min.css'
 
 import { useGraphStore } from './core/graphStore'
 import { initialSeedNodes, initialSeedEdges } from './core/seedData'
-import type { EpistemeNode } from './core/types'
+import { buildFlowElements } from './core/layout'
+import { sanitizeGraph } from './core/graph'
 import { CompoundNode } from './components/CompoundNode'
 import { BreadcrumbsBar } from './components/BreadcrumbsBar'
 import { NodeInspector } from './components/NodeInspector'
 
-const STORAGE_KEY = 'epistemap_state_v1'
+const STORAGE_KEY_V2 = 'epistemap:v2'
+const STORAGE_KEY_V1 = 'epistemap_state_v1'
 
-export const App: React.FC = () => {
+const EpistemapCanvas: React.FC = () => {
   const nodes = useGraphStore((s) => s.nodes)
   const edges = useGraphStore((s) => s.edges)
-  const focusNodeId = useGraphStore((s) => s.focusNodeId)
+  const focusId = useGraphStore((s) => s.focusId)
+  const selectedId = useGraphStore((s) => s.selectedId)
+  const select = useGraphStore((s) => s.select)
+  const setFocus = useGraphStore((s) => s.setFocus)
+  const addEdge = useGraphStore((s) => s.addEdge)
+  const addRootNode = useGraphStore((s) => s.addRootNode)
+  const updateRootPosition = useGraphStore((s) => s.updateRootPosition)
   const loadGraph = useGraphStore((s) => s.loadGraph)
-  const onNodesChange = useGraphStore((s) => s.onNodesChange)
-  const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
-  const onConnect = useGraphStore((s) => s.onConnect)
-  const selectNode = useGraphStore((s) => s.selectNode)
+
+  const { screenToFlowPosition, fitView } = useReactFlow()
 
   const nodeTypes = useMemo(() => ({ compound: CompoundNode }), [])
 
-  // Inicialização Local-First com recuperação de LocalStorage ou Semente Inicial
+  // Inicialização Local-First com migração transparente
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed.nodes && parsed.edges && parsed.nodes.length > 0) {
-          loadGraph(parsed.nodes, parsed.edges)
+      const savedV2 = localStorage.getItem(STORAGE_KEY_V2)
+      if (savedV2) {
+        const parsed = JSON.parse(savedV2)
+        if (parsed && Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
+          loadGraph(sanitizeGraph(parsed))
+          return
+        }
+      }
+
+      // Tenta migrar dados da v1 se existirem
+      const savedV1 = localStorage.getItem(STORAGE_KEY_V1)
+      if (savedV1) {
+        const parsedV1 = JSON.parse(savedV1)
+        if (parsedV1 && Array.isArray(parsedV1.nodes) && parsedV1.nodes.length > 0) {
+          const migrated = sanitizeGraph(parsedV1)
+          loadGraph(migrated)
+          localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(migrated))
+          localStorage.removeItem(STORAGE_KEY_V1)
           return
         }
       }
     } catch (err) {
-      console.warn('Falha ao restaurar estado do LocalStorage:', err)
+      console.warn('Falha ao restaurar dados salvos:', err)
     }
 
-    // Carrega dados semente iniciais
-    loadGraph(initialSeedNodes, initialSeedEdges)
+    // Carrega dados semente iniciais distribuídos
+    loadGraph({ nodes: initialSeedNodes, edges: initialSeedEdges })
   }, [loadGraph])
 
   // Persistência contínua Local-First
   useEffect(() => {
-    if (nodes.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }))
+    if (nodes.length > 0 || edges.length > 0) {
+      localStorage.setItem(STORAGE_KEY_V2, JSON.stringify({ nodes, edges }))
     }
   }, [nodes, edges])
 
-  const { visibleNodes, visibleEdges } = useMemo(() => {
-    if (focusNodeId === null) {
-      const nodeMap = new Map<string, EpistemeNode>(nodes.map((n) => [n.id, n]))
-      const isVisible = (node: EpistemeNode): boolean => {
-        if (!node.parentId) return true
-        let currentParent = nodeMap.get(node.parentId)
-        while (currentParent) {
-          if (!currentParent.data.isExpanded) return false
-          currentParent = currentParent.parentId ? nodeMap.get(currentParent.parentId) : undefined
-        }
-        return true
-      }
-      const vNodes = nodes.filter(isVisible)
-      const vNodeIds = new Set(vNodes.map((n) => n.id))
-      const vEdges = edges.filter((e) => vNodeIds.has(e.source) && vNodeIds.has(e.target))
-      return { visibleNodes: vNodes, visibleEdges: vEdges }
-    }
+  // Projeção visual pura e memoizada
+  const { flowNodes, flowEdges } = useMemo(() => {
+    return buildFlowElements(nodes, edges, { focusId, selectedId })
+  }, [nodes, edges, focusId, selectedId])
 
-    // Modo Drill-down focado
-    const allIds = new Set<string>([focusNodeId])
-    let addedMore = true
-    while (addedMore) {
-      addedMore = false
-      for (const node of nodes) {
-        if (node.parentId && allIds.has(node.parentId) && !allIds.has(node.id)) {
-          allIds.add(node.id)
-          addedMore = true
-        }
-      }
-    }
+  // Ajusta visão da câmera ao alternar foco/drill-down
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitView({ padding: 0.25, duration: 300 })
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [focusId, fitView])
 
-    const vNodes = nodes.filter((n) => allIds.has(n.id))
-    const vNodeIds = new Set(vNodes.map((n) => n.id))
-    const vEdges = edges.filter((e) => vNodeIds.has(e.source) && vNodeIds.has(e.target))
-    return { visibleNodes: vNodes, visibleEdges: vEdges }
-  }, [nodes, edges, focusNodeId])
-
-  const handleNodeClick: NodeMouseHandler = useCallback(
-    (_, node) => {
-      selectNode(node.id)
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: RFNode) => {
+      select(node.id)
     },
-    [selectNode]
+    [select]
   )
 
   const handlePaneClick = useCallback(() => {
-    selectNode(null)
-  }, [selectNode])
+    select(null)
+  }, [select])
+
+  const handleNodeDragStop: OnNodeDrag = useCallback(
+    (_, node) => {
+      const domainNode = nodes.find((n) => n.id === node.id)
+      if (domainNode && domainNode.parentId === null && focusId === null) {
+        updateRootPosition(node.id, {
+          x: Math.round(node.position.x),
+          y: Math.round(node.position.y),
+        })
+      }
+    },
+    [nodes, focusId, updateRootPosition]
+  )
+
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      if (connection.source && connection.target) {
+        addEdge(connection.source, connection.target)
+      }
+    },
+    [addEdge]
+  )
+
+  // Duplo clique no canvas cria conceito diretamente no ponto clicado
+  const handleDoubleClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Ignora se o clique foi em um nó
+      const target = event.target as HTMLElement
+      if (target.closest('.react-flow__node')) return
+
+      const flowPos = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+
+      addRootNode('Novo Conceito', {
+        x: Math.round(flowPos.x),
+        y: Math.round(flowPos.y),
+      })
+    },
+    [screenToFlowPosition, addRootNode]
+  )
+
+  // Atalhos de teclado: Esc (limpar seleção / subir nível), Delete/Backspace (excluir nó)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Não intercepta se o foco estiver num input ou textarea
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+
+      if (e.key === 'Escape') {
+        if (selectedId) {
+          select(null)
+        } else if (focusId) {
+          const focusedNode = nodes.find((n) => n.id === focusId)
+          setFocus(focusedNode?.parentId || null)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedId, focusId, nodes, select, setFocus])
 
   return (
     <div
@@ -118,27 +180,27 @@ export const App: React.FC = () => {
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
-      {/* Barra Superior com Breadcrumbs */}
       <BreadcrumbsBar />
 
-      {/* Área Central: Canvas do Grafo + Inspetor de Conhecimento */}
       <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ flex: 1, height: '100%', position: 'relative' }}>
+        <div
+          style={{ flex: 1, height: '100%', position: 'relative' }}
+          onDoubleClick={handleDoubleClick}
+        >
           <ReactFlow
-            nodes={visibleNodes}
-            edges={visibleEdges}
+            nodes={flowNodes}
+            edges={flowEdges}
             nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
             onNodeClick={handleNodeClick}
             onPaneClick={handlePaneClick}
+            onNodeDragStop={handleNodeDragStop}
+            onConnect={handleConnect}
             fitView
             fitViewOptions={{ padding: 0.2 }}
             colorMode="dark"
             style={{ backgroundColor: '#0e111a' }}
           >
-            <Background color="#1f2537" gap={20} size={1.2} variant={BackgroundVariant.Dots} />
+            <Background color="#1f2537" gap={24} size={1.2} variant={BackgroundVariant.Dots} />
             <Controls
               style={{
                 backgroundColor: '#181c28',
@@ -148,7 +210,7 @@ export const App: React.FC = () => {
               }}
             />
             <MiniMap
-              nodeColor="#4f46e5"
+              nodeColor={(n) => ((n.data as { color?: string })?.color || '#4f46e5')}
               maskColor="rgba(14, 17, 26, 0.75)"
               style={{
                 backgroundColor: '#141824',
@@ -159,10 +221,17 @@ export const App: React.FC = () => {
           </ReactFlow>
         </div>
 
-        {/* Inspetor Lateral de Nós (Markdown + LaTeX + Sub-objetos) */}
         <NodeInspector />
       </div>
     </div>
+  )
+}
+
+export const App: React.FC = () => {
+  return (
+    <ReactFlowProvider>
+      <EpistemapCanvas />
+    </ReactFlowProvider>
   )
 }
 

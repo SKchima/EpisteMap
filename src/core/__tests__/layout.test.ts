@@ -1,0 +1,141 @@
+import { describe, it, expect } from 'vitest'
+import { computeNodeSizes, buildFlowElements, applyDagreLayout, findFreePosition } from '../layout'
+import type { KnowledgeNode, KnowledgeEdge } from '../types'
+
+function makeNode(id: string, parentId: string | null = null, extra: Partial<KnowledgeNode['data']> = {}): KnowledgeNode {
+  return {
+    id,
+    parentId,
+    position: { x: 0, y: 0 },
+    data: { title: id, description: '', tags: [], color: null, collapsed: false, ...extra },
+  }
+}
+
+describe('layout determinístico de contêineres', () => {
+  it('atribui dimensões de folha para nós sem filhos ou colapsados', () => {
+    const nodes = [
+      makeNode('a'),
+      makeNode('b', null, { collapsed: true }),
+      makeNode('c', 'b'), // filho de b colapsado
+    ]
+
+    const sizes = computeNodeSizes(nodes)
+    expect(sizes.get('a')).toEqual({ width: 232, height: 112 })
+    expect(sizes.get('b')).toEqual({ width: 232, height: 112 })
+  })
+
+  it('calcula dimensão de contêiner suficiente para envolver os filhos sem sobreposição', () => {
+    const nodes = [
+      makeNode('parent'),
+      makeNode('child1', 'parent'),
+      makeNode('child2', 'parent'),
+    ]
+
+    const sizes = computeNodeSizes(nodes)
+    const pSize = sizes.get('parent')!
+    const cSize = sizes.get('child1')!
+
+    expect(cSize).toEqual({ width: 232, height: 112 })
+    // O pai deve ter largura e altura maiores que os filhos
+    expect(pSize.width).toBeGreaterThan(cSize.width)
+    expect(pSize.height).toBeGreaterThan(cSize.height)
+  })
+
+  it('posiciona filhos dentro do contêiner sem que eles se sobreponham', () => {
+    const nodes = [
+      makeNode('parent'),
+      makeNode('child1', 'parent'),
+      makeNode('child2', 'parent'),
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, [], { focusId: null, selectedId: null })
+    const c1 = flowNodes.find((n) => n.id === 'child1')!
+    const c2 = flowNodes.find((n) => n.id === 'child2')!
+
+    expect(c1.parentId).toBe('parent')
+    expect(c2.parentId).toBe('parent')
+    expect(c1.position.x).toBeGreaterThanOrEqual(16)
+    expect(c1.position.y).toBeGreaterThanOrEqual(48) // cabeçalho
+
+    // Não podem estar na mesma exata posição (não há sobreposição)
+    const samePosition = c1.position.x === c2.position.x && c1.position.y === c2.position.y
+    expect(samePosition).toBe(false)
+  })
+
+  it('emite pais antes dos filhos (requisito estrito do React Flow para sub-flows)', () => {
+    const nodes = [
+      makeNode('child', 'parent'),
+      makeNode('parent'),
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, [], { focusId: null, selectedId: null })
+    const parentIdx = flowNodes.findIndex((n) => n.id === 'parent')
+    const childIdx = flowNodes.findIndex((n) => n.id === 'child')
+    expect(parentIdx).toBeLessThan(childIdx)
+  })
+
+  it('no modo drill-down focado, o nó focado vira raiz em (0, 0)', () => {
+    const nodes = [
+      makeNode('root'),
+      makeNode('sub', 'root'),
+      makeNode('leaf', 'sub'),
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, [], { focusId: 'sub', selectedId: null })
+    expect(flowNodes.map((n) => n.id)).toEqual(['sub', 'leaf'])
+    const subFlow = flowNodes.find((n) => n.id === 'sub')!
+    expect(subFlow.parentId).toBeUndefined()
+    expect(subFlow.position).toEqual({ x: 0, y: 0 })
+  })
+
+  it('eleva arestas para o nó visível quando o destino estiver dentro de nó colapsado', () => {
+    const nodes = [
+      makeNode('rootA'),
+      makeNode('childA', 'rootA'),
+      makeNode('rootB', null, { collapsed: true }),
+      makeNode('childB', 'rootB'), // oculto
+    ]
+
+    const edges: KnowledgeEdge[] = [
+      { id: 'e1', source: 'childA', target: 'childB', label: 'conecta' },
+    ]
+
+    const { flowEdges } = buildFlowElements(nodes, edges, { focusId: null, selectedId: null })
+    expect(flowEdges).toHaveLength(1)
+    expect(flowEdges[0].source).toBe('childA')
+    expect(flowEdges[0].target).toBe('rootB') // elevado para o pai visível
+  })
+})
+
+describe('distribuição espacial e auto-layout Dagre', () => {
+  it('findFreePosition encontra um local livre para novo nó sem colidir', () => {
+    const existing = [
+      { ...makeNode('a'), position: { x: 100, y: 100 } },
+    ]
+
+    const pos = findFreePosition(existing, { x: 100, y: 100 }, 232, 112)
+    // Não pode ser exatamente (100, 100)
+    expect(pos.x !== 100 || pos.y !== 100).toBe(true)
+  })
+
+  it('applyDagreLayout distribui os nós raízes espalhando-os no espaço', () => {
+    const nodes = [
+      makeNode('a'),
+      makeNode('b'),
+      makeNode('c'),
+    ]
+    const edges: KnowledgeEdge[] = [
+      { id: 'e1', source: 'a', target: 'b', label: '' },
+      { id: 'e2', source: 'b', target: 'c', label: '' },
+    ]
+
+    const layouted = applyDagreLayout(nodes, edges)
+    const posA = layouted.find((n) => n.id === 'a')!.position
+    const posB = layouted.find((n) => n.id === 'b')!.position
+    const posC = layouted.find((n) => n.id === 'c')!.position
+
+    // Devem ter coordenadas distintas espalhadas horizontalmente (LR) ou verticalmente
+    expect(posA.x).not.toBe(posB.x)
+    expect(posB.x).not.toBe(posC.x)
+  })
+})

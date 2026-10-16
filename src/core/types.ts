@@ -1,82 +1,69 @@
-import type { NodeChange, EdgeChange, Connection } from '@xyflow/react'
+/**
+ * Modelo de domínio e Store do Epistemap (specs/DOMAIN_SPEC.md v2).
+ */
 
-export interface EpistemeNodeData {
-  title: string;
-  description: string;
-  tags: string[];
-  parentId?: string | null;
-  isExpanded?: boolean;
-  color?: string;
-  [key: string]: unknown;
+export type Position = { x: number; y: number }
+
+export type NodeData = {
+  title: string
+  description: string
+  tags: string[]
+  /** Cor de destaque; quando null, herda a do ancestral mais próximo. */
+  color: string | null
+  collapsed: boolean
 }
 
-export interface EpistemeNode {
-  id: string;
-  type?: string;
-  position: { x: number; y: number };
-  data: EpistemeNodeData;
-  parentId?: string;
-  extent?: 'parent' | undefined;
-  [key: string]: unknown;
+export type KnowledgeNode = {
+  id: string
+  /** null = conceito raiz. */
+  parentId: string | null
+  /** Só tem significado para raízes; a posição de sub-objetos é derivada pelo layout. */
+  position: Position
+  data: NodeData
 }
 
-export interface EpistemeEdge {
-  id: string;
-  source: string;
-  target: string;
-  label?: string;
-  animated?: boolean;
-  [key: string]: unknown;
+export type KnowledgeEdge = {
+  id: string
+  source: string
+  target: string
+  label: string
 }
 
-export interface BreadcrumbItem {
-  id: string | null;
-  title: string;
+export type Graph = {
+  nodes: KnowledgeNode[]
+  edges: KnowledgeEdge[]
 }
 
-export interface EpistemapState {
-  nodes: EpistemeNode[];
-  edges: EpistemeEdge[];
-  selectedNodeId: string | null;
-  focusNodeId: string | null;
+export type BreadcrumbItem = {
+  id: string | null
+  title: string
+}
 
-  // Reatividade do React Flow
-  onNodesChange: (changes: NodeChange<EpistemeNode>[]) => void;
-  onEdgesChange: (changes: EdgeChange<EpistemeEdge>[]) => void;
-  onConnect: (connection: Connection) => void;
+export interface EpistemapStore {
+  nodes: KnowledgeNode[]
+  edges: KnowledgeEdge[]
+  selectedId: string | null
+  focusId: string | null
 
-  // Operações de Nó
-  addNode: (node: {
-    position: { x: number; y: number };
-    data?: Partial<EpistemeNodeData>;
-    type?: string;
-    id?: string;
-    parentId?: string;
-    extent?: 'parent';
-  }) => string;
-  addSubNode: (parentId: string, title?: string) => string;
-  updateNodeData: (id: string, partialData: Partial<EpistemeNodeData>) => void;
-  updateNodePosition: (id: string, position: { x: number; y: number }) => void;
-  removeNode: (id: string) => void;
-  toggleNodeExpansion: (id: string) => void;
+  // Ações de Nó
+  addRootNode: (title?: string, position?: Position) => string
+  addSubNode: (parentId: string, title?: string) => string
+  updateNode: (id: string, partial: Partial<NodeData>) => void
+  updateRootPosition: (id: string, position: Position) => void
+  removeNode: (id: string) => void
+  reparentNode: (id: string, newParentId: string | null) => boolean
+  toggleCollapse: (id: string) => void
 
-  // Operações de Aresta
-  addEdge: (edge: {
-    source: string;
-    target: string;
-    label?: string;
-    animated?: boolean;
-    id?: string;
-  }) => void;
-  removeEdge: (edgeId: string) => void;
+  // Ações de Aresta
+  addEdge: (source: string, target: string, label?: string) => string
+  removeEdge: (edgeId: string) => void
 
-  // Foco e Navegação
-  selectNode: (id: string | null) => void;
-  setFocusNode: (id: string | null) => void;
-  getBreadcrumbs: () => BreadcrumbItem[];
-  getVisibleElements: () => { nodes: EpistemeNode[]; edges: EpistemeEdge[] };
+  // Navegação e Layout
+  select: (id: string | null) => void
+  setFocus: (id: string | null) => void
+  organizeMap: () => void
 
-  // Utilitários de Persistência
-  loadGraph: (nodes: EpistemeNode[], edges: EpistemeEdge[]) => void;
-  resetGraph: () => void;
+  // Persistência
+  loadGraph: (graph: Graph) => void
+  resetGraph: () => void
 }

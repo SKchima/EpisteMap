@@ -1,174 +1,281 @@
 import React, { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { ChevronDown, ChevronRight, Plus, Eye, Layers } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Eye, FolderTree, FileText } from 'lucide-react'
 import { useGraphStore } from '../core/graphStore'
-import type { EpistemeNodeData } from '../core/types'
+
+type CompoundNodeData = {
+  title: string
+  description: string
+  tags: string[]
+  collapsed: boolean
+  color: string | null
+  childCount: number
+  isContainer: boolean
+  width: number
+  height: number
+}
 
 export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
-  const nodeData = data as EpistemeNodeData
-  const nodes = useGraphStore((s) => s.nodes)
+  const nodeData = data as unknown as CompoundNodeData
   const addSubNode = useGraphStore((s) => s.addSubNode)
-  const toggleNodeExpansion = useGraphStore((s) => s.toggleNodeExpansion)
-  const setFocusNode = useGraphStore((s) => s.setFocusNode)
-  const selectNode = useGraphStore((s) => s.selectNode)
+  const toggleCollapse = useGraphStore((s) => s.toggleCollapse)
+  const setFocus = useGraphStore((s) => s.setFocus)
+  const select = useGraphStore((s) => s.select)
 
-  const childNodes = nodes.filter((n) => n.parentId === id)
-  const childCount = childNodes.length
-  const isExpanded = nodeData.isExpanded ?? true
-  const isSubnode = Boolean(nodeData.parentId)
+  const isContainer = Boolean(nodeData.isContainer)
+  const childCount = nodeData.childCount || 0
+  const isCollapsed = Boolean(nodeData.collapsed)
+  const accentColor = nodeData.color || '#6366f1'
 
   const handleAddSubNode = (e: React.MouseEvent) => {
     e.stopPropagation()
     addSubNode(id)
   }
 
-  const handleToggleExpand = (e: React.MouseEvent) => {
+  const handleToggleCollapse = (e: React.MouseEvent) => {
     e.stopPropagation()
-    toggleNodeExpansion(id)
+    toggleCollapse(id)
   }
 
   const handleDrillDown = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setFocusNode(id)
+    setFocus(id)
   }
 
   return (
     <div
-      onClick={() => selectNode(id)}
+      onClick={(e) => {
+        e.stopPropagation()
+        select(id)
+      }}
       style={{
-        minWidth: isSubnode ? 180 : 260,
-        backgroundColor: isSubnode ? '#1e2230' : '#181b24',
-        border: selected ? '2px solid #6366f1' : '1px solid #333a4d',
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
+        backgroundColor: isContainer ? 'rgba(21, 24, 34, 0.65)' : '#161922',
+        border: selected
+          ? `2px solid ${accentColor}`
+          : isContainer
+            ? '1.5px dashed rgba(79, 70, 229, 0.35)'
+            : '1px solid #2d3345',
         borderRadius: '8px',
         color: '#e2e8f0',
-        boxShadow: selected ? '0 0 12px rgba(99, 102, 241, 0.4)' : '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
-        padding: '12px',
-        transition: 'all 0.15s ease',
+        boxShadow: selected
+          ? `0 0 14px ${accentColor}40`
+          : '0 4px 6px -1px rgba(0, 0, 0, 0.25)',
+        padding: isContainer ? '10px 14px' : '10px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: isContainer ? 'flex-start' : 'space-between',
         cursor: 'pointer',
+        transition: 'border 0.15s ease, box-shadow 0.15s ease',
+        position: 'relative',
       }}
     >
       {/* Handles para conexões direcionais */}
-      <Handle type="target" position={Position.Top} style={{ background: '#6366f1', width: 8, height: 8 }} />
-      <Handle type="target" position={Position.Left} style={{ background: '#6366f1', width: 8, height: 8 }} />
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: accentColor, width: 8, height: 8 }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ background: accentColor, width: 8, height: 8 }}
+      />
 
       {/* Cabeçalho do Nó */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          height: '28px',
+          borderBottom: isContainer ? '1px solid #282f42' : 'none',
+          paddingBottom: isContainer ? '6px' : '0',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-          <Layers size={14} color={isSubnode ? '#94a3b8' : '#818cf8'} />
-          <span style={{ fontWeight: 600, fontSize: isSubnode ? '13px' : '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: accentColor,
+              flexShrink: 0,
+            }}
+          />
+          {isContainer ? (
+            <FolderTree size={13} color="#94a3b8" />
+          ) : (
+            <FileText size={13} color="#94a3b8" />
+          )}
+          <span
+            style={{
+              fontWeight: 600,
+              fontSize: isContainer ? '13px' : '12px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: '#f8fafc',
+            }}
+          >
             {nodeData.title || 'Sem título'}
           </span>
         </div>
 
-        {/* Contador de sub-objetos */}
-        {childCount > 0 && (
+        {/* Controles de Cabeçalho */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {childCount > 0 && (
+            <button
+              onClick={handleToggleCollapse}
+              title={isCollapsed ? 'Expandir sub-objetos' : 'Recolher sub-objetos'}
+              style={{
+                background: '#232838',
+                border: '1px solid #363e54',
+                borderRadius: '4px',
+                color: '#cbd5e1',
+                padding: '2px 5px',
+                fontSize: '11px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              <span>{childCount}</span>
+              {isCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+            </button>
+          )}
+
           <button
-            onClick={handleToggleExpand}
-            title={isExpanded ? 'Recolher sub-objetos' : 'Expandir sub-objetos'}
+            onClick={handleDrillDown}
+            title="Drill-down (Focar neste nó)"
             style={{
-              background: '#282e3f',
-              border: 'none',
+              background: '#232838',
+              border: '1px solid #363e54',
               borderRadius: '4px',
-              color: '#94a3b8',
-              padding: '2px 6px',
-              fontSize: '11px',
+              color: '#38bdf8',
+              padding: '3px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
             }}
           >
-            {childCount}
-            {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            <Eye size={11} />
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Descrição curta / preview */}
-      {nodeData.description && (
-        <div
-          style={{
-            fontSize: '11px',
-            color: '#94a3b8',
-            marginBottom: '8px',
-            lineHeight: 1.4,
-            maxHeight: '38px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {nodeData.description}
-        </div>
-      )}
-
-      {/* Tags */}
-      {nodeData.tags && nodeData.tags.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-          {nodeData.tags.map((tag, idx) => (
-            <span
-              key={idx}
+      {/* Conteúdo específico para nós folha ou recolhidos */}
+      {!isContainer && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+          {nodeData.description ? (
+            <div
               style={{
-                fontSize: '10px',
-                background: '#2d3345',
-                color: '#cbd5e1',
-                borderRadius: '3px',
-                padding: '1px 5px',
+                fontSize: '11px',
+                color: '#94a3b8',
+                lineHeight: 1.35,
+                maxHeight: '32px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
               }}
             >
-              #{tag}
-            </span>
-          ))}
+              {nodeData.description}
+            </div>
+          ) : (
+            <div style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic' }}>
+              Clique para descrever
+            </div>
+          )}
+
+          {/* Tags */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '4px',
+                overflow: 'hidden',
+                maxWidth: '130px',
+              }}
+            >
+              {nodeData.tags && nodeData.tags.slice(0, 2).map((tag, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    fontSize: '9px',
+                    background: '#242a3a',
+                    color: '#94a3b8',
+                    padding: '1px 4px',
+                    borderRadius: '3px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+
+            <button
+              onClick={handleAddSubNode}
+              title="Adicionar sub-objeto"
+              style={{
+                background: '#242a3a',
+                border: '1px solid #363e54',
+                borderRadius: '4px',
+                color: '#c7d2fe',
+                padding: '2px 5px',
+                fontSize: '10px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2px',
+              }}
+            >
+              <Plus size={10} /> Sub
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Ações Rápidas no Rodapé do Nó */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', paddingTop: '4px', borderTop: '1px solid #2d3345' }}>
-        <button
-          onClick={handleAddSubNode}
-          title="Subdividir em sub-objeto"
-          style={{
-            background: '#2e3547',
-            border: 'none',
-            borderRadius: '4px',
-            color: '#c7d2fe',
-            padding: '3px 6px',
-            fontSize: '11px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '3px',
-          }}
-        >
-          <Plus size={12} />
-          Sub-objeto
-        </button>
+      {/* Ação rápida para adicionar sub-objeto dentro de contêiner aberto */}
+      {isContainer && (
+        <div style={{ position: 'absolute', bottom: '6px', right: '10px' }}>
+          <button
+            onClick={handleAddSubNode}
+            title="Adicionar sub-objeto a este contêiner"
+            style={{
+              background: '#242a3a',
+              border: '1px solid #363e54',
+              borderRadius: '4px',
+              color: '#c7d2fe',
+              padding: '2px 6px',
+              fontSize: '10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px',
+            }}
+          >
+            <Plus size={10} /> Sub-objeto
+          </button>
+        </div>
+      )}
 
-        <button
-          onClick={handleDrillDown}
-          title="Focar neste nó (Drill-down)"
-          style={{
-            background: '#2e3547',
-            border: 'none',
-            borderRadius: '4px',
-            color: '#38bdf8',
-            padding: '3px 6px',
-            fontSize: '11px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '3px',
-          }}
-        >
-          <Eye size={12} />
-          Focar
-        </button>
-      </div>
-
-      <Handle type="source" position={Position.Bottom} style={{ background: '#6366f1', width: 8, height: 8 }} />
-      <Handle type="source" position={Position.Right} style={{ background: '#6366f1', width: 8, height: 8 }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: accentColor, width: 8, height: 8 }}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ background: accentColor, width: 8, height: 8 }}
+      />
     </div>
   )
 })

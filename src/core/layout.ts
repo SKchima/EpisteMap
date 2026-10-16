@@ -1,0 +1,392 @@
+import dagre from '@dagrejs/dagre'
+import { MarkerType, type Node as RFNode, type Edge as RFEdge } from '@xyflow/react'
+import type { KnowledgeNode, KnowledgeEdge, Position } from './types'
+import { getAncestorIds, resolveColor } from './graph'
+
+export const LEAF_WIDTH = 232
+export const LEAF_HEIGHT = 112
+export const HEADER_HEIGHT = 44
+export const PADDING = 16
+export const GAP = 16
+
+export type NodeSize = { width: number; height: number }
+
+export function computeNodeSizes(nodes: KnowledgeNode[]): Map<string, NodeSize> {
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+  const sizeMap = new Map<string, NodeSize>()
+
+  function calculateSize(nodeId: string, visited: Set<string> = new Set()): NodeSize {
+    if (sizeMap.has(nodeId)) return sizeMap.get(nodeId)!
+    if (visited.has(nodeId)) return { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+    visited.add(nodeId)
+
+    const node = nodeMap.get(nodeId)
+    if (!node) return { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+
+    const children = nodes.filter((n) => n.parentId === nodeId)
+    if (children.length === 0 || node.data.collapsed) {
+      const leaf = { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+      sizeMap.set(nodeId, leaf)
+      return leaf
+    }
+
+    const childSizes = children.map((c) => calculateSize(c.id, new Set(visited)))
+    const k = children.length
+    const cols = Math.min(k, Math.max(1, Math.ceil(Math.sqrt(k))))
+    const rows = Math.ceil(k / cols)
+
+    let maxColW = 0
+    let maxRowH = 0
+    for (const s of childSizes) {
+      maxColW = Math.max(maxColW, s.width)
+      maxRowH = Math.max(maxRowH, s.height)
+    }
+
+    const totalW = PADDING * 2 + cols * maxColW + (cols - 1) * GAP
+    const totalH = HEADER_HEIGHT + PADDING * 2 + rows * maxRowH + (rows - 1) * GAP
+
+    const containerSize = {
+      width: Math.max(LEAF_WIDTH, totalW),
+      height: Math.max(LEAF_HEIGHT, totalH),
+    }
+
+    sizeMap.set(nodeId, containerSize)
+    return containerSize
+  }
+
+  for (const n of nodes) {
+    calculateSize(n.id)
+  }
+
+  return sizeMap
+}
+
+export type BuildFlowOptions = {
+  focusId: string | null
+  selectedId: string | null
+}
+
+export function buildFlowElements(
+  nodes: KnowledgeNode[],
+  edges: KnowledgeEdge[],
+  options: BuildFlowOptions
+): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
+  const { focusId, selectedId } = options
+  const sizes = computeNodeSizes(nodes)
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+
+  // 1. Identificar nós visíveis
+  let visibleNodes: KnowledgeNode[] = []
+
+  if (focusId === null) {
+    // Modo geral: Raízes visíveis; filhos visíveis apenas se todos os ancestrais estiverem expandidos (!collapsed)
+    function isNodeVisible(n: KnowledgeNode): boolean {
+      if (!n.parentId) return true
+      let parent = nodeMap.get(n.parentId)
+      while (parent) {
+        if (parent.data.collapsed) return false
+        parent = parent.parentId ? nodeMap.get(parent.parentId) : undefined
+      }
+      return true
+    }
+    visibleNodes = nodes.filter(isNodeVisible)
+  } else {
+    // Modo drill-down focado
+    const focused = nodeMap.get(focusId)
+    if (focused) {
+      const allowed = new Set<string>([focusId])
+      let added = true
+      while (added) {
+        added = false
+        for (const n of nodes) {
+          if (n.parentId && allowed.has(n.parentId) && !allowed.has(n.id)) {
+            const parent = nodeMap.get(n.parentId)
+            if (parent && !parent.data.collapsed) {
+              allowed.add(n.id)
+              added = true
+            }
+          }
+        }
+      }
+      visibleNodes = nodes.filter((n) => allowed.has(n.id))
+    }
+  }
+
+  const visibleIdSet = new Set(visibleNodes.map((n) => n.id))
+
+  // 2. Ordenação topológica (pais DEVEM vir antes dos filhos para o React Flow)
+  const orderedNodes: KnowledgeNode[] = []
+  const addedIds = new Set<string>()
+
+  function addNodeHierarchy(n: KnowledgeNode) {
+    if (addedIds.has(n.id)) return
+    if (n.parentId && visibleIdSet.has(n.parentId) && !addedIds.has(n.parentId)) {
+      const parent = nodeMap.get(n.parentId)
+      if (parent) addNodeHierarchy(parent)
+    }
+    addedIds.add(n.id)
+    orderedNodes.push(n)
+
+    const children = visibleNodes.filter((c) => c.parentId === n.id)
+    for (const c of children) {
+      addNodeHierarchy(c)
+    }
+  }
+
+  for (const n of visibleNodes) {
+    if (n.id === focusId || !n.parentId || !visibleIdSet.has(n.parentId)) {
+      addNodeHierarchy(n)
+    }
+  }
+
+  // 3. Montar posições e elementos do React Flow
+  const flowNodes: RFNode[] = []
+
+  // Mapeia posições relativas dos filhos dentro de cada contêiner
+  const childPositions = new Map<string, Position>()
+
+  for (const parent of orderedNodes) {
+    const children = visibleNodes.filter((c) => c.parentId === parent.id)
+    if (children.length === 0 || parent.data.collapsed) continue
+
+    const k = children.length
+    const cols = Math.min(k, Math.max(1, Math.ceil(Math.sqrt(k))))
+
+    let maxColW = 0
+    let maxRowH = 0
+    for (const c of children) {
+      const cs = sizes.get(c.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+      maxColW = Math.max(maxColW, cs.width)
+      maxRowH = Math.max(maxRowH, cs.height)
+    }
+
+    children.forEach((c, index) => {
+      const col = index % cols
+      const row = Math.floor(index / cols)
+      const relX = PADDING + col * (maxColW + GAP)
+      const relY = HEADER_HEIGHT + PADDING + row * (maxRowH + GAP)
+      childPositions.set(c.id, { x: relX, y: relY })
+    })
+  }
+
+  for (const n of orderedNodes) {
+    const size = sizes.get(n.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+    const isDrillRoot = focusId !== null && n.id === focusId
+    const isRoot = isDrillRoot || !n.parentId || !visibleIdSet.has(n.parentId)
+
+    let pos: Position = { x: 0, y: 0 }
+    let parentIdProp: string | undefined = undefined
+
+    if (isDrillRoot) {
+      pos = { x: 0, y: 0 }
+      parentIdProp = undefined
+    } else if (isRoot) {
+      pos = n.position
+      parentIdProp = undefined
+    } else {
+      pos = childPositions.get(n.id) || { x: PADDING, y: HEADER_HEIGHT + PADDING }
+      parentIdProp = n.parentId!
+    }
+
+    const childrenCount = nodes.filter((c) => c.parentId === n.id).length
+    const color = resolveColor(nodes, n.id)
+
+    flowNodes.push({
+      id: n.id,
+      type: 'compound',
+      position: pos,
+      parentId: parentIdProp,
+      extent: parentIdProp ? 'parent' : undefined,
+      selected: n.id === selectedId,
+      style: {
+        width: size.width,
+        height: size.height,
+      },
+      data: {
+        title: n.data.title,
+        description: n.data.description,
+        tags: n.data.tags,
+        collapsed: n.data.collapsed,
+        color,
+        childCount: childrenCount,
+        isContainer: childrenCount > 0 && !n.data.collapsed,
+        width: size.width,
+        height: size.height,
+      },
+    })
+  }
+
+  // 4. Arestas: elevação para o nó visível mais próximo
+  function getVisibleTarget(id: string): string | null {
+    if (visibleIdSet.has(id)) return id
+    const ancestors = getAncestorIds(nodes, id)
+    for (const ancId of ancestors) {
+      if (visibleIdSet.has(ancId)) return ancId
+    }
+    return null
+  }
+
+  const flowEdges: RFEdge[] = []
+  const edgeDedupe = new Set<string>()
+
+  for (const edge of edges) {
+    const sourceVis = getVisibleTarget(edge.source)
+    const targetVis = getVisibleTarget(edge.target)
+
+    if (!sourceVis || !targetVis) continue
+    if (sourceVis === targetVis) continue // Self-loop gerado por nó recolhido
+
+    const key = `${sourceVis}->${targetVis}`
+    if (edgeDedupe.has(key)) continue
+    edgeDedupe.add(key)
+
+    const isElevated = sourceVis !== edge.source || targetVis !== edge.target
+
+    flowEdges.push({
+      id: edge.id,
+      source: sourceVis,
+      target: targetVis,
+      label: edge.label,
+      animated: isElevated,
+      style: {
+        stroke: isElevated ? '#64748b' : '#6366f1',
+        strokeWidth: 2,
+        strokeDasharray: isElevated ? '5,5' : undefined,
+      },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: isElevated ? '#64748b' : '#6366f1',
+        width: 16,
+        height: 16,
+      },
+    })
+  }
+
+  return { flowNodes, flowEdges }
+}
+
+export function findFreePosition(
+  existingNodes: KnowledgeNode[],
+  startPos: Position,
+  width: number = LEAF_WIDTH,
+  height: number = LEAF_HEIGHT
+): Position {
+  const roots = existingNodes.filter((n) => n.parentId === null)
+  if (roots.length === 0) return startPos
+
+  const sizes = computeNodeSizes(existingNodes)
+  const MARGIN = 40
+
+  function isOverlapping(x: number, y: number): boolean {
+    const r1 = { left: x, right: x + width, top: y, bottom: y + height }
+    for (const r of roots) {
+      const rs = sizes.get(r.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+      const r2 = {
+        left: r.position.x - MARGIN,
+        right: r.position.x + rs.width + MARGIN,
+        top: r.position.y - MARGIN,
+        bottom: r.position.y + rs.height + MARGIN,
+      }
+      if (!(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  if (!isOverlapping(startPos.x, startPos.y)) {
+    return startPos
+  }
+
+  // Busca em espiral ao redor de startPos
+  const STEP = 50
+  for (let radius = 1; radius <= 20; radius++) {
+    const d = radius * STEP
+    const candidates: Position[] = [
+      { x: startPos.x + d, y: startPos.y },
+      { x: startPos.x, y: startPos.y + d },
+      { x: startPos.x + d, y: startPos.y + d },
+      { x: startPos.x - d, y: startPos.y },
+      { x: startPos.x, y: startPos.y - d },
+      { x: startPos.x - d, y: startPos.y - d },
+      { x: startPos.x + d, y: startPos.y - d },
+      { x: startPos.x - d, y: startPos.y + d },
+    ]
+
+    for (const cand of candidates) {
+      if (!isOverlapping(cand.x, cand.y)) {
+        return cand
+      }
+    }
+  }
+
+  return { x: startPos.x + 300, y: startPos.y }
+}
+
+export function applyDagreLayout(
+  nodes: KnowledgeNode[],
+  edges: KnowledgeEdge[]
+): KnowledgeNode[] {
+  const g = new dagre.graphlib.Graph()
+  g.setGraph({
+    rankdir: 'LR',
+    nodesep: 80,
+    ranksep: 120,
+    marginx: 50,
+    marginy: 50,
+  })
+  g.setDefaultEdgeLabel(() => ({}))
+
+  const sizes = computeNodeSizes(nodes)
+  const roots = nodes.filter((n) => n.parentId === null)
+  if (roots.length === 0) return nodes
+
+  const rootIdSet = new Set(roots.map((r) => r.id))
+
+  // Mapeia qualquer nó para sua raiz
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+  function getRootId(id: string): string {
+    let curr = nodeMap.get(id)
+    while (curr && curr.parentId) {
+      curr = nodeMap.get(curr.parentId)
+    }
+    return curr ? curr.id : id
+  }
+
+  // Adiciona nós raízes ao dagre
+  for (const root of roots) {
+    const size = sizes.get(root.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+    g.setNode(root.id, { width: size.width, height: size.height })
+  }
+
+  // Adiciona arestas elevadas às raízes
+  const addedEdges = new Set<string>()
+  for (const e of edges) {
+    const srcRoot = getRootId(e.source)
+    const tgtRoot = getRootId(e.target)
+    if (rootIdSet.has(srcRoot) && rootIdSet.has(tgtRoot) && srcRoot !== tgtRoot) {
+      const key = `${srcRoot}->${tgtRoot}`
+      if (!addedEdges.has(key)) {
+        addedEdges.add(key)
+        g.setEdge(srcRoot, tgtRoot)
+      }
+    }
+  }
+
+  dagre.layout(g)
+
+  // Atualiza as posições das raízes
+  return nodes.map((node) => {
+    if (node.parentId !== null) return node
+    const dagreNode = g.node(node.id)
+    if (!dagreNode) return node
+    const size = sizes.get(node.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+    return {
+      ...node,
+      position: {
+        x: Math.round(dagreNode.x - size.width / 2),
+        y: Math.round(dagreNode.y - size.height / 2),
+      },
+    }
+  })
+}
