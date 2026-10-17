@@ -241,7 +241,17 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({ onOpenSearch, on
     >
       {/* Logotipo e Trilha de Breadcrumbs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '8px' }}>
+          <img
+            src="/favicon.svg"
+            alt="Epistemap Logo"
+            style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '5px',
+              flexShrink: 0,
+            }}
+          />
           <span style={{ fontWeight: 700, fontSize: '15px', color: '#818cf8', letterSpacing: '-0.3px' }}>
             Epistemap
           </span>
