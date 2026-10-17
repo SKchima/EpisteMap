@@ -226,4 +226,29 @@ describe('distribuição espacial e auto-layout Dagre', () => {
     expect(p3.y).toBeGreaterThan(p1.y)
     expect(p4.y).toBeGreaterThan(p2.y)
   })
+
+  it('no modo macro, recolhe nós filhos para dentro da matéria raiz evitando sobreposição', () => {
+    const nodes = [
+      makeNode('materia_algebra', null, { title: 'Álgebra Abstrata', collapsed: false }),
+      makeNode('capitulo_grupos', 'materia_algebra', { title: 'Teoria de Grupos' }),
+      makeNode('capitulo_aneis', 'materia_algebra', { title: 'Anéis e Corpos' }),
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, [], {
+      focusId: null,
+      selectedId: null,
+      lodLevel: 'macro',
+    })
+
+    // No modo macro, apenas a matéria raiz é emitida na tela
+    expect(flowNodes.map((n) => n.id)).toEqual(['materia_algebra'])
+
+    const rootFlow = flowNodes[0]
+    expect(rootFlow.width).toBe(232)
+    expect(rootFlow.height).toBe(112)
+    expect(rootFlow.data.isContainer).toBe(false)
+    expect(rootFlow.data.collapsed).toBe(true)
+    expect(rootFlow.data.childCount).toBe(2)
+    expect(rootFlow.data.childrenSummary).toHaveLength(2)
+  })
 })

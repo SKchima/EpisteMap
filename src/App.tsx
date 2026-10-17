@@ -11,12 +11,14 @@ import {
   type OnNodeDrag,
   type OnNodesChange,
   useReactFlow,
+  useStore,
   ReactFlowProvider,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import 'katex/dist/katex.min.css'
 
 import { useGraphStore } from './core/graphStore'
+import { getZoomLodLevel } from './core/lod'
 import { initialSeedNodes, initialSeedEdges } from './core/seedData'
 import {
   buildFlowElements,
@@ -59,6 +61,11 @@ const EpistemapCanvas: React.FC = () => {
   const redo = useGraphStore((s) => s.redo)
 
   const { screenToFlowPosition, fitView } = useReactFlow()
+
+  // Nível de detalhe do zoom da câmera para projeção de nós
+  const lodLevel = useStore(
+    useCallback((s: { transform: [number, number, number] }) => getZoomLodLevel(s.transform[2]), [])
+  )
 
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -127,8 +134,9 @@ const EpistemapCanvas: React.FC = () => {
       selectedId,
       dropTargetId,
       activeTag,
+      lodLevel,
     })
-  }, [nodes, edges, focusId, selectedId, dropTargetId, activeTag])
+  }, [nodes, edges, focusId, selectedId, dropTargetId, activeTag, lodLevel])
 
   // Sobrepõe coordenadas efêmeras durante arraste para que nós controlados se movam suavemente
   const renderedFlowNodes = useMemo(() => {

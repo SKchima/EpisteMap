@@ -135,12 +135,12 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
           border: cardBorder,
           borderRadius: '8px',
           color: cardTextColor,
-          padding: '8px 12px',
+          padding: isContainer ? '10px 14px' : '8px 12px',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
+          justifyContent: isContainer ? 'flex-start' : 'center',
+          alignItems: isContainer ? 'flex-start' : 'center',
+          textAlign: isContainer ? 'left' : 'center',
           cursor: 'pointer',
           opacity: isDimmed ? 0.32 : 1,
           position: 'relative',
@@ -159,7 +159,16 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
           style={{ background: handleColor, width: 8, height: 8 }}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            maxWidth: '100%',
+            justifyContent: isContainer ? 'flex-start' : 'center',
+            width: isContainer ? '100%' : 'auto',
+          }}
+        >
           <span
             style={{
               width: 9,

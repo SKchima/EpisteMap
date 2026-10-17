@@ -1,6 +1,6 @@
 import dagre from '@dagrejs/dagre'
 import { MarkerType, type Node as RFNode, type Edge as RFEdge } from '@xyflow/react'
-import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox, ChildNodeSummary } from './types'
+import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox, ChildNodeSummary, ZoomLodLevel } from './types'
 import { getAncestorIds, getSubtreeIds, resolveColor, canReparent, isNodeInsideBoundingBox } from './graph'
 
 export const LEAF_WIDTH = 232
@@ -13,7 +13,8 @@ export type NodeSize = { width: number; height: number }
 
 export function computeNodeSizes(
   nodes: KnowledgeNode[],
-  focusId: string | null = null
+  focusId: string | null = null,
+  isMacro: boolean = false
 ): Map<string, NodeSize> {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
   const sizeMap = new Map<string, NodeSize>()
@@ -27,7 +28,9 @@ export function computeNodeSizes(
     if (!node) return { width: LEAF_WIDTH, height: LEAF_HEIGHT }
 
     const children = nodes.filter((n) => n.parentId === nodeId)
-    const isNodeCollapsed = nodeId === focusId ? false : Boolean(node.data.collapsed)
+    const isNodeCollapsed = isMacro
+      ? (focusId !== null ? nodeId !== focusId : true)
+      : (nodeId === focusId ? false : Boolean(node.data.collapsed))
     if (children.length === 0 || isNodeCollapsed) {
       const leaf = { width: LEAF_WIDTH, height: LEAF_HEIGHT }
       sizeMap.set(nodeId, leaf)
@@ -81,6 +84,7 @@ export type BuildFlowOptions = {
   selectedId: string | null
   dropTargetId?: string | null
   activeTag?: string | null
+  lodLevel?: ZoomLodLevel
 }
 
 export function buildFlowElements(
@@ -88,17 +92,20 @@ export function buildFlowElements(
   edges: KnowledgeEdge[],
   options: BuildFlowOptions
 ): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
-  const { focusId, selectedId, dropTargetId = null, activeTag = null } = options
-  const sizes = computeNodeSizes(nodes, focusId)
+  const { focusId, selectedId, dropTargetId = null, activeTag = null, lodLevel = 'standard' } = options
+  const isMacro = lodLevel === 'macro'
+  const sizes = computeNodeSizes(nodes, focusId, isMacro)
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
   // 1. Identificar nós visíveis
   let visibleNodes: KnowledgeNode[] = []
 
   if (focusId === null) {
-    // Modo geral: Raízes visíveis; filhos visíveis apenas se todos os ancestrais estiverem expandidos (!collapsed)
+    // Modo geral: Raízes visíveis; filhos visíveis apenas se todos os ancestrais estiverem expandidos (!collapsed).
+    // No modo macro (zoom out panorâmico), sub-temas recolhem para dentro do cartão da matéria mãe.
     function isNodeVisible(n: KnowledgeNode): boolean {
       if (!n.parentId) return true
+      if (isMacro) return false
       let parent = nodeMap.get(n.parentId)
       while (parent) {
         if (parent.data.collapsed) return false
@@ -118,7 +125,9 @@ export function buildFlowElements(
         for (const n of nodes) {
           if (n.parentId && allowed.has(n.parentId) && !allowed.has(n.id)) {
             const parent = nodeMap.get(n.parentId)
-            if (parent && (parent.id === focusId || !parent.data.collapsed)) {
+            // No modo macro durante drill-down, apenas os filhos diretos da raiz focada são renderizados
+            const isAllowedByMacro = !isMacro || parent?.id === focusId
+            if (isAllowedByMacro && parent && (parent.id === focusId || !parent.data.collapsed)) {
               allowed.add(n.id)
               added = true
             }
@@ -203,7 +212,7 @@ export function buildFlowElements(
     const size = sizes.get(n.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
     const isDrillRoot = focusId !== null && n.id === focusId
     const isRoot = isDrillRoot || !n.parentId || !visibleIdSet.has(n.parentId)
-    const isNodeCollapsed = isDrillRoot ? false : Boolean(n.data.collapsed)
+    const isNodeCollapsed = isDrillRoot ? false : (isMacro ? true : Boolean(n.data.collapsed))
 
     let pos: Position = { x: 0, y: 0 }
     let parentIdProp: string | undefined = undefined
@@ -263,6 +272,7 @@ export function buildFlowElements(
         pdfAttachment: n.data.pdfAttachment,
         width: size.width,
         height: size.height,
+        lodLevel,
       },
     })
   }
