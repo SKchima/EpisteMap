@@ -1,168 +1,154 @@
 # Epistemap
 
-> **Scientific Knowledge Modeling, Concept Graphs & LaTeX Compendium Navigation.**  
-> *Interactive Concept Mapping, Scientific Notes & Knowledge Graphs — 100% Local-First.*
+Local-first concept mapping and knowledge graph tool with native LaTeX support.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
-[![React 19](https://img.shields.io/badge/React-19-61dafb.svg?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-8.3-646cff.svg?logo=vite)](https://vite.dev/)
-[![Vitest](https://img.shields.io/badge/Tests-128%20passed-brightgreen.svg?logo=vitest)](https://vitest.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
+[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.3-646cff.svg)](https://vite.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-128%20passed-brightgreen.svg)](https://vitest.dev/)
 [![Oxlint](https://img.shields.io/badge/Linter-Oxlint%20(0%20warnings)-blueviolet.svg)](https://oxc.rs/)
-[![Local--First](https://img.shields.io/badge/Storage-100%25%20Local--First-emerald.svg)]()
+[![Local--First](https://img.shields.io/badge/Storage-Local--First-emerald.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 🧭 What is Epistemap?
+## Overview
 
-**Epistemap** is an interactive conceptual workspace designed for students, mathematicians, computer scientists, and researchers who need to structure, navigate, and master complex subjects and academic compendiums.
-
-Inspired by the principles of **Spec-Driven Development (SDD)**, epistemology, and modern personal knowledge management (PKM) tools (such as Roam and Obsidian), Epistemap marries the visual freedom of an infinite canvas with the rigor of **LaTeX (KaTeX)**.
+Epistemap is an infinite canvas application for structuring academic notes, mathematical concepts, and course summaries into hierarchical graphs. It stores all data locally in the browser and runs without external network dependencies.
 
 ---
 
-## ✨ Key Features
+## Features
 
-### 🧩 1. Hierarchical Structure & Compound Nodes
-- **Nested Concepts**: Create root concepts and subdivide them into multi-level child objects without collisions.
-- **Bottom-Up Layout Engine**: Container nodes automatically calculate dynamic widths and heights based on their children.
-- **Dagre Spatial Auto-Layout**: Rebalance and arrange complex concept graphs with a single click on **"Organize Map"**.
-- **Drill-Down & Breadcrumbs**: Focus your viewport onto an isolated concept subgraph or navigate back smoothly via the top breadcrumbs bar.
+### Hierarchical Compound Nodes
+- Nested nodes: create parent concepts containing child sub-nodes.
+- Bottom-up sizing: parent node bounds adjust to enclose child nodes.
+- Layout auto-organization: Dagre algorithm arranges nodes and edges on command.
+- Drill-down: focus view on a single subgraph; breadcrumbs bar navigates up the hierarchy.
 
-### 📐 2. Native Mathematics & Markdown
-- **Full KaTeX Rendering**: Real-time rendering for inline math (`$E = mc^2$`) and display equations (`$$\int_a^b f(x) dx$$`).
-- **Semantic Hyperlinks (`[[WikiLinks]]`)**: Link ideas across concepts by typing `[[Target Concept]]` in any description.
-- **Interactive Red Links**: Unlinked concepts appear highlighted (`+ [[New Concept]]`). Clicking one instantly creates the root node, establishes a semantic edge, and opens it for immediate editing.
-- **Automatic Backlinks**: The side inspector dynamically aggregates all notes referencing the active concept.
+### Math and Markdown
+- KaTeX rendering: inline (`$...$`) and display (`$$...$$`) formulas.
+- WikiLinks: `[[Target Concept]]` syntax creates bidirectional graph edges.
+- Unlinked references: missing targets render as `+ [[Concept]]` and create nodes on click.
+- Backlinks list: side panel displays nodes that reference the active node.
 
-### 📖 3. Direct LaTeX Compendium Importer (`.tex`)
-- Import lecture notes, compendiums, and problem sets using the **"Import .tex"** button.
-- The parser automatically structures:
-  - `\chapter` and `\section` $\rightarrow$ Root concepts / Section containers.
-  - `\subsection` and `\subsubsection` $\rightarrow$ Nested hierarchical sub-nodes.
-  - Mathematical Environments (`\begin{definicao}`, `\begin{teorema}`, `\begin{lema}`, `\begin{corolario}`, `\begin{exemplo}`, etc.) $\rightarrow$ Child nodes tagged `#definicao`, `#teorema`, etc.
-  - Cross-references (`\ref`, `\eqref`) and KaTeX expressions preserved verbatim.
+### LaTeX (.tex) Import
+- Parses standard LaTeX documents via the "Import .tex" button.
+- Maps `\section` to root nodes and `\subsection` to nested child nodes.
+- Converts theorem environments (`\begin{definicao}`, `\begin{teorema}`, `\begin{lema}`, etc.) into tagged sub-nodes.
+- Preserves math expressions and cross-references.
 
-### 📄 4. PDF Attachment & Embedded Reader
-- **Self-Contained Attachments**: Attach reference PDFs to any concept with Base64 storage embedded directly in the graph JSON.
-- **Inspector Split View**: Read, zoom, and navigate pages (Previous, Next, Jump to Page) without leaving the canvas.
-- **Native Reader Jump (Zathura)**: Quick button to open the PDF directly at the current reference page in your Linux native reader (e.g. Zathura via `#page=N`).
+### PDF Attachments and Viewer
+- Attaches PDF files to nodes (stored as Base64 in the local graph model).
+- Embedded side-panel viewer with page navigation and zoom controls.
+- External reader option opens the PDF at the referenced page in system readers (e.g., Zathura via `#page=N`).
 
-### 🎨 5. Three Distinct Visual Themes
-- **Dark (Default)**: `#0d1017` dark aesthetic tuned for low-light research sessions.
-- **Light**: Clean neutral background (`#f8fafc`) for daytime work.
-- **High-Contrast Paper / Print**: Pure white canvas (`#ffffff`), solid black borders (`2px solid #000000`), and absolute black typography (WCAG AAA compliant), tailored for reading and exporting directly to printed compendiums.
+### Visual Themes
+- Three modes: Dark (default), Light, and High-Contrast (black borders on pure white background).
+- Persisted in `localStorage`.
 
-### 🎯 6. Smart Connection Handles
-- Lateral connection handles are **completely invisible by default**, keeping the canvas clutter-free.
-- Handles become visible on the active node when selected.
-- When dragging a new edge, target handles appear dynamically across compatible nodes and scale up on hover for effortless snapping.
+### Connection Handles
+- Handles remain hidden by default.
+- Handles appear on selected nodes and valid target nodes during edge dragging.
 
-### 🔍 7. Global Spotlight Search (`Cmd+K`)
-- Spotlight-style command palette searching titles, tags, and body content in real time.
-- **Smart Navigation**: Jumping to a hidden or nested concept automatically unfolds collapsed ancestors and animates smooth camera centering onto the target node.
+### Search (Cmd+K)
+- Searches titles, tags, and content text.
+- Expands collapsed parent nodes and centers the viewport on the selected node.
 
-### ⏪ 8. Temporal History (Undo / Redo) & Backup Management
-- **Undo / Redo**: Full `Cmd+Z` and `Cmd+Shift+Z` support powered by `zundo` middleware with keystroke debounce coalescing.
-- **Full Backup (.json)**: Export complete self-contained graphs with Base64-embedded PDFs.
-- **Lightweight Backup (.json)**: Strips heavy Base64 binary payloads (< 50 KB), perfect for versioning in your personal git notes repo (e.g., `ygg`).
-- **Local Snapshots**: Save named recovery checkpoints directly in browser storage to experiment risk-free.
-- **2x Retina PNG Export**: High-resolution image snapshots capturing the entire visible knowledge graph.
+### History and Backups
+- Undo / Redo: `Cmd+Z` / `Cmd+Shift+Z` via Zundo middleware with typing debounce.
+- Full backup (.json): exports graph data including embedded PDFs.
+- Lightweight backup (.json): exports graph hierarchy and text without PDF binary data (< 50 KB), suitable for git tracking.
+- Local snapshots: manual recovery points stored in `localStorage`.
+- PNG export: renders the current graph to a 2x image.
 
 ---
 
-## 🔒 Security, Privacy & Local-First Architecture
+## Storage and Privacy
 
-- **Zero Cloud / Zero Telemetry**: Epistemap never contacts external servers, tracking services, or cloud APIs.
-- **Local Isolation**: All graph data resides strictly within your local browser storage (`~/.local/state/epistemap/`).
-- **Separation of Open Source Code and Personal Data**:
-  - The public Epistemap repository contains **only the application source code and synthetic acceptance tests**.
-  - Your actual notes and study maps remain private on your machine and can be backed up to your personal notes repo (e.g. `~/repos/ygg/epistemap-backups/`).
+- No external servers, telemetry, or third-party cookies.
+- All graph data is stored in the local browser profile (`~/.local/state/epistemap/`).
+- The git repository contains application source code and tests. Personal notes remain local and can be exported as lightweight JSON to a private repository.
 
 ---
 
-## 🚀 Installation & Getting Started
+## Installation
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) v18+
-- [npm](https://www.npmjs.com/)
+- Node.js 18+
+- npm
 
-### 1. Clone & Install Dependencies
+### Clone and Install
 ```bash
 git clone https://github.com/SKchima/EpisteMap.git
 cd EpisteMap
 npm install
 ```
 
-### 2. Run in Development Mode
+### Development
 ```bash
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Runs at `http://localhost:5173`.
 
-### 3. Build for Production
+### Production Build
 ```bash
 npm run build
 ```
-Production assets are generated in `dist/` with modular code splitting (KaTeX, React Flow, Markdown, and Vendor chunks) for instant loading.
+Builds assets into `dist/`.
 
 ---
 
-## 🐧 Linux Desktop Integration (Rofi / Hyprland / Sway / GNOME)
+## Linux Desktop Launcher
 
-Epistemap includes an intelligent standalone launcher that runs the map as an isolated desktop app (without browser tabs or URL bars):
+A shell script runs Epistemap as a standalone Chrome window and terminates the background server when the window closes:
 
 ```bash
-# 1-Click desktop integration (installs ~/.local/bin/epistemap and .desktop for Rofi):
 chmod +x bin/epistemap-launcher.sh
 ./bin/epistemap-launcher.sh install
 ```
 
-### Terminal Commands
+Commands:
 ```bash
-epistemap         # Starts background server and launches the app window
-epistemap status  # Displays running server PID and port status
-epistemap stop    # Gracefully terminates the background server
-epistemap dev     # Launches in development mode with Hot Module Reloading (HMR)
+epistemap         # Starts server and opens app window
+epistemap status  # Shows server PID and port
+epistemap stop    # Stops background server
+epistemap dev     # Starts in development mode with HMR
 ```
-
-> **1-to-1 Lifecycle**: The background server monitors the app window and automatically shuts down when you close the window (e.g. `Super + Q`), preventing orphaned Node processes on port `5173`.
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
-| `Cmd + K` / `Ctrl + K` | Open Global Search Palette |
-| `Cmd + ,` / `Ctrl + ,` | Open Settings, Backups & Snapshots Modal |
-| `Cmd + Z` / `Ctrl + Z` | Undo last graph modification |
-| `Cmd + Shift + Z` / `Ctrl + Y` | Redo last reverted modification |
-| `Tab` | Create a child concept inside the selected node |
-| `Enter` | Create a sibling concept (same parent as selected) |
-| `Delete` / `Backspace` | Delete selected node or edge (with confirmation prompt if node has children) |
-| `Esc` | Clear active selection; if none, drill-up one level |
-| Double-click on canvas | Create a new root concept at click coordinates |
+| `Cmd + K` / `Ctrl + K` | Open search palette |
+| `Cmd + ,` / `Ctrl + ,` | Open settings and backup modal |
+| `Cmd + Z` / `Ctrl + Z` | Undo |
+| `Cmd + Shift + Z` / `Ctrl + Y` | Redo |
+| `Tab` | Create child node inside selection |
+| `Enter` | Create sibling node |
+| `Delete` / `Backspace` | Delete selected node or edge |
+| `Esc` | Clear selection / drill up one level |
+| Double click canvas | Create root node at coordinates |
 
 ---
 
-## 🧪 Code Quality & Acceptance Tests
-
-Epistemap is engineered following **Spec-Driven Development (SDD)** with exhaustive test coverage:
+## Tests
 
 ```bash
-# Run the complete test suite (128 acceptance tests via Vitest)
+# Acceptance tests (128 tests via Vitest)
 npm test
 
-# Run Oxlint (0 warnings, 0 errors guaranteed)
+# Linter (Oxlint)
 npm run lint
 
-# Strict TypeScript typechecking and production build
+# TypeScript and build verification
 npm run build
 ```
 
 ---
 
-## 📄 License
+## License
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE).
