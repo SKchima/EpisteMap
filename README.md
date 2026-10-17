@@ -36,9 +36,9 @@ EpisteMap is designed for studying and organizing dense academic subjects. It al
 - Preserves mathematical formulas and reference tags.
 
 ### PDF Attachments and Reader
-- Attach PDF documents to any concept node.
-- Embedded side-panel reader with page navigation and zoom.
-- Button to open the referenced page in the system reader (e.g., Zathura via `#page=N`).
+- Direct local disk linking (`filePath`) avoiding multi-megabyte Base64 payload bloat in `vault.json`.
+- Embedded side-panel reader streaming local PDFs via `/api/pdf?path=...` with page navigation and zoom.
+- 1-click native opening in Zathura at the exact referenced page (`POST /api/open-pdf`).
 
 ### History and Backups
 - Undo and redo support.
@@ -117,6 +117,26 @@ node bin/epistemap-cli.mjs connect --source "Sobolev Spaces" --target "Weak Deri
 node bin/epistemap-cli.mjs get --title "Sobolev Spaces"
 ```
 
+### LaTeX Compendium Synchronization (SyncTeX & Zathura)
+
+EpisteMap features an automated indexing engine that parses compiled LaTeX documents and builds hierarchical knowledge graphs without duplicating source code or bloating the vault:
+
+- **SyncTeX Page Mapping**: Decompresses `.build/main.synctex.gz` to map each `\section`, `\subsection`, and formal environment (`definicao`, `teorema`, `lema`, `corolario`, `proposicao`, `exemplo`, `exercicio`) to its exact 1-indexed page in the compiled PDF.
+- **Deep-Linked Concept Nodes**: Each formal block becomes a node containing clean KaTeX-ready Markdown, extracted concept subtitles, and direct pointer metadata `{ filePath, page }`.
+- **Idempotent Updates**: Re-running the synchronization updates existing nodes in-place, preserving canvas layouts and custom manual edges.
+- **TikZ Decoupling**: Replaces complex TikZ or quiver diagrams with clean pointers to the exact PDF page, ensuring KaTeX rendering stability.
+
+Commands:
+```bash
+# Synchronize all compendiums discovered under latex-projects
+npm run sync:latex
+# Or specify a custom root directory
+node bin/epistemap-cli.mjs sync-compendios --root "/path/to/latex-projects"
+
+# Index a single LaTeX project or main.tex (optional --compile flag invokes latexmk)
+node bin/epistemap-cli.mjs index-latex "/path/to/project" --compile
+```
+
 ---
 
 ## Technical Specifications & Architecture
@@ -124,7 +144,7 @@ node bin/epistemap-cli.mjs get --title "Sobolev Spaces"
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8.3-646cff.svg)](https://vite.dev/)
-[![Vitest](https://img.shields.io/badge/Tests-132%20passed-brightgreen.svg)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-135%20passed-brightgreen.svg)](https://vitest.dev/)
 [![Oxlint](https://img.shields.io/badge/Linter-Oxlint%20(0%20warnings)-blueviolet.svg)](https://oxc.rs/)
 [![Local--First](https://img.shields.io/badge/Storage-Local--First-emerald.svg)]()
 
@@ -134,4 +154,4 @@ node bin/epistemap-cli.mjs get --title "Sobolev Spaces"
 - **Mathematics & Markup**: KaTeX (`remark-math`, `rehype-katex`), custom LaTeX AST parser.
 - **State & Temporal History**: Zustand with Zundo undo/redo middleware and input debounce coalescing.
 - **Local Vault Sync**: Node `fs.watch` and Server-Sent Events (SSE) bridge.
-- **Linter & Test Suite**: Oxlint (0 warnings across 152 rules), Vitest (132 acceptance tests).
+- **Linter & Test Suite**: Oxlint (0 warnings across 152 rules), Vitest (135 acceptance tests).
