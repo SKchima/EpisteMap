@@ -1,7 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+:root,
+:root[data-theme="dark"] {
+  --bg-app: #0d1017;
+  --bg-canvas: #0e111a;
+  --bg-card: #161922;
+  --bg-panel: #12151c;
+  --bg-control: #181c28;
+  --border-color: #262b3a;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --scrollbar-track: #141722;
+  --scrollbar-thumb: #2b3245;
+  --scrollbar-thumb-hover: #3e4863;
+  --katex-color: #c7d2fe;
+  --code-bg: #1e2433;
+  --code-color: #93c5fd;
+}
+
+:root[data-theme="light"] {
+  --bg-app: #f8fafc;
+  --bg-canvas: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-panel: #ffffff;
+  --bg-control: #ffffff;
+  --border-color: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+  --katex-color: #312e81;
+  --code-bg: #f1f5f9;
+  --code-color: #1e293b;
+}
+
+:root[data-theme="high-contrast"] {
+  --bg-app: #ffffff;
+  --bg-canvas: #ffffff;
+  --bg-card: #ffffff;
+  --bg-panel: #ffffff;
+  --bg-control: #ffffff;
+  --border-color: #000000;
+  --text-main: #000000;
+  --text-muted: #000000;
+  --scrollbar-track: #ffffff;
+  --scrollbar-thumb: #000000;
+  --scrollbar-thumb-hover: #333333;
+  --katex-color: #000000;
+  --code-bg: #ffffff;
+  --code-color: #000000;
 }
 
 html,
@@ -12,8 +62,8 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #0d1017;
-  color: #e2e8f0;
+  background-color: var(--bg-app);
+  color: var(--text-main);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -26,22 +76,32 @@ body,
 }
 
 ::-webkit-scrollbar-track {
-  background: #141722;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2b3245;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
+:root[data-theme="high-contrast"] ::-webkit-scrollbar-thumb {
+  border: 1px solid #000000;
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #3e4863;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* KaTeX and Markdown Styles */
 .katex {
   font-size: 1.05em;
-  color: #c7d2fe;
+  color: var(--katex-color);
+}
+
+:root[data-theme="high-contrast"] .katex,
+:root[data-theme="high-contrast"] .katex * {
+  color: #000000 !important;
+  border-color: #000000 !important;
 }
 
 .katex-display {
@@ -54,25 +114,96 @@ body,
 code {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.9em;
-  background-color: #1e2433;
+  background-color: var(--code-bg);
   padding: 2px 5px;
   border-radius: 4px;
-  color: #93c5fd;
+  color: var(--code-color);
 }
 
-/* React Flow Dark Customizations */
+:root[data-theme="high-contrast"] code {
+  border: 1px solid #000000;
+}
+
+/* React Flow Controls button customizations */
 .react-flow__controls button {
-  background-color: #181c28 !important;
-  border-bottom: 1px solid #2d3448 !important;
-  color: #94a3b8 !important;
-}
-
-.react-flow__controls button:hover {
-  background-color: #242a3c !important;
+  background-color: var(--bg-control) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-muted) !important;
 }
 
 .react-flow__controls button svg {
-  fill: #94a3b8 !important;
+  fill: var(--text-muted) !important;
+}
+
+:root[data-theme="high-contrast"] .react-flow__controls {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="high-contrast"] .react-flow__controls button {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #000000 !important;
+  color: #000000 !important;
+}
+
+:root[data-theme="high-contrast"] .react-flow__controls button svg {
+  fill: #000000 !important;
+}
+
+:root[data-theme="high-contrast"] .react-flow__minimap {
+  border: 2px solid #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* High Contrast Paper/Print Edges */
+:root[data-theme="high-contrast"] .react-flow__edge-path {
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+}
+
+:root[data-theme="high-contrast"] .react-flow__edge-text {
+  fill: #000000 !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme="high-contrast"] .react-flow__edge-textbg {
+  fill: #ffffff !important;
+  stroke: #000000 !important;
+  stroke-width: 1.5px !important;
+}
+
+/* React Flow Handle Ergonomics */
+.epistemap-handle,
+.react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, scale 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: crosshair !important;
+}
+
+/* Handles become visible on selected node */
+.react-flow__node.selected .epistemap-handle,
+.react-flow__node.selected .react-flow__handle,
+.epistemap-node-selected .epistemap-handle {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Handles visible on all nodes when dragging a connection */
+.is-connecting .epistemap-handle,
+.is-connecting .react-flow__handle {
+  opacity: 1 !important;
+  pointer-events: all !important;
+}
+
+/* Scale & Emerald highlight when hovering directly over handle */
+.epistemap-handle:hover,
+.react-flow__handle:hover {
+  opacity: 1 !important;
+  scale: 1.4;
+  background-color: #10b981 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.85);
+  z-index: 25;
 }
 
 .react-flow__attribution {

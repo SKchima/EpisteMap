@@ -1,4 +1,82 @@
-import type { KnowledgeNode, KnowledgeEdge, Graph, BreadcrumbItem } from './types'
+import type {
+  KnowledgeNode,
+  KnowledgeEdge,
+  Graph,
+  BreadcrumbItem,
+  Position,
+  BoundingBox,
+  PdfAttachment,
+} from './types'
+
+export type SearchMatchCategory = 'title' | 'tag' | 'description'
+
+export type SearchResult = {
+  node: KnowledgeNode
+  matchType: SearchMatchCategory
+  path: string[]
+}
+
+export function isNodeInsideBoundingBox(
+  pos: Position,
+  containerRect: BoundingBox
+): boolean {
+  return (
+    pos.x >= containerRect.x &&
+    pos.x <= containerRect.x + containerRect.width &&
+    pos.y >= containerRect.y &&
+    pos.y <= containerRect.y + containerRect.height
+  )
+}
+
+export function searchNodes(nodes: KnowledgeNode[], query: string): SearchResult[] {
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+
+  function getAncestorTitles(nodeId: string): string[] {
+    const ancestorIds = getAncestorIds(nodes, nodeId)
+    return ancestorIds
+      .reverse()
+      .map((id) => nodeMap.get(id)?.data.title || '')
+      .filter(Boolean)
+  }
+
+  const trimmed = query.trim()
+  if (!trimmed) {
+    return nodes.map((node) => ({
+      node,
+      matchType: 'title' as const,
+      path: getAncestorTitles(node.id),
+    }))
+  }
+
+  const q = trimmed.toLowerCase().replace(/^#/, '')
+  const scored: { result: SearchResult; score: number }[] = []
+
+  for (const node of nodes) {
+    const titleMatch = node.data.title.toLowerCase().includes(q)
+    const tagMatch = node.data.tags.some((t) => t.toLowerCase().includes(q))
+    const descMatch = node.data.description.toLowerCase().includes(q)
+
+    if (titleMatch) {
+      scored.push({
+        score: node.data.title.toLowerCase().startsWith(q) ? 4 : 3,
+        result: { node, matchType: 'title', path: getAncestorTitles(node.id) },
+      })
+    } else if (tagMatch) {
+      scored.push({
+        score: 2,
+        result: { node, matchType: 'tag', path: getAncestorTitles(node.id) },
+      })
+    } else if (descMatch) {
+      scored.push({
+        score: 1,
+        result: { node, matchType: 'description', path: getAncestorTitles(node.id) },
+      })
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score)
+  return scored.map((s) => s.result)
+}
 
 export function getSubtreeIds(nodes: KnowledgeNode[], rootId: string): Set<string> {
   const result = new Set<string>([rootId])
@@ -156,17 +234,35 @@ export function sanitizeGraph(raw: unknown): Graph {
       ? dataObj.tags.filter((t): t is string => typeof t === 'string')
       : []
 
+    const rawPdf = dataObj.pdfAttachment as Record<string, unknown> | undefined
+    let pdfAttachment: PdfAttachment | null = null
+    if (rawPdf && typeof rawPdf === 'object') {
+      const rawName = typeof rawPdf.name === 'string' ? rawPdf.name.trim() : ''
+      const rawBase64 = typeof rawPdf.base64 === 'string' ? rawPdf.base64 : ''
+      const rawPage = Number(rawPdf.page)
+      pdfAttachment = {
+        name: rawName || 'documento.pdf',
+        base64: rawBase64,
+        page: Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1,
+      }
+    }
+
+    const nodeData: KnowledgeNode['data'] = {
+      title: typeof dataObj.title === 'string' && dataObj.title.trim() ? dataObj.title.trim() : 'Sem título',
+      description: typeof dataObj.description === 'string' ? dataObj.description : '',
+      tags,
+      color: typeof dataObj.color === 'string' && dataObj.color.trim() ? dataObj.color.trim() : null,
+      collapsed,
+    }
+    if (pdfAttachment) {
+      nodeData.pdfAttachment = pdfAttachment
+    }
+
     parsedNodes.push({
       id,
       parentId: typeof n.parentId === 'string' && n.parentId.trim() ? n.parentId.trim() : null,
       position: pos,
-      data: {
-        title: typeof dataObj.title === 'string' && dataObj.title.trim() ? dataObj.title.trim() : 'Sem título',
-        description: typeof dataObj.description === 'string' ? dataObj.description : '',
-        tags,
-        color: typeof dataObj.color === 'string' && dataObj.color.trim() ? dataObj.color.trim() : null,
-        collapsed,
-      },
+      data: nodeData,
     })
   }
 

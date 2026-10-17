@@ -4,6 +4,21 @@
 
 export type Position = { x: number; y: number }
 
+export type BoundingBox = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type ThemeMode = 'dark' | 'light' | 'high-contrast'
+
+export type PdfAttachment = {
+  name: string
+  base64: string
+  page: number
+}
+
 export type NodeData = {
   title: string
   description: string
@@ -11,6 +26,7 @@ export type NodeData = {
   /** Cor de destaque; quando null, herda a do ancestral mais próximo. */
   color: string | null
   collapsed: boolean
+  pdfAttachment?: PdfAttachment | null
 }
 
 export type KnowledgeNode = {
@@ -44,6 +60,10 @@ export interface EpistemapStore {
   edges: KnowledgeEdge[]
   selectedId: string | null
   focusId: string | null
+  activeTag: string | null
+  theme: ThemeMode
+  canUndo: boolean
+  canRedo: boolean
 
   // Ações de Nó
   addRootNode: (title?: string, position?: Position) => string
@@ -51,19 +71,34 @@ export interface EpistemapStore {
   updateNode: (id: string, partial: Partial<NodeData>) => void
   updateRootPosition: (id: string, position: Position) => void
   removeNode: (id: string) => void
-  reparentNode: (id: string, newParentId: string | null) => boolean
+  reparentNode: (id: string, newParentId: string | null, position?: Position) => boolean
   toggleCollapse: (id: string) => void
+  createNodeFromWikiLink: (sourceNodeId: string, targetTitle: string) => string
+
+  // Acoplamento de PDF
+  attachPdf: (nodeId: string, attachment: PdfAttachment) => void
+  removePdf: (nodeId: string) => void
+  setPdfPage: (nodeId: string, page: number) => void
 
   // Ações de Aresta
   addEdge: (source: string, target: string, label?: string) => string
+  updateEdgeLabel: (edgeId: string, label: string) => void
   removeEdge: (edgeId: string) => void
 
-  // Navegação e Layout
+  // Navegação, Busca, Tema e Layout
   select: (id: string | null) => void
   setFocus: (id: string | null) => void
+  setActiveTag: (tag: string | null) => void
+  setTheme: (theme: ThemeMode) => void
+  navigateToNode: (nodeId: string) => void
   organizeMap: () => void
 
-  // Persistência
+  // Histórico (Undo/Redo via Zundo)
+  undo: () => void
+  redo: () => void
+
+  // Persistência e Importação em Lote
   loadGraph: (graph: Graph) => void
   resetGraph: () => void
+  importBatch: (newNodes: KnowledgeNode[], newEdges?: KnowledgeEdge[]) => void
 }

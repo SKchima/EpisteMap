@@ -7,8 +7,10 @@ import {
   getBacklinks,
   getBreadcrumbs,
   getSubtreeIds,
+  isNodeInsideBoundingBox,
   resolveColor,
   sanitizeGraph,
+  searchNodes,
 } from '../graph'
 import type { KnowledgeNode } from '../types'
 
@@ -55,6 +57,48 @@ describe('hierarquia', () => {
     expect(resolveColor(colored, 'b')).toBe('#f00')
     expect(resolveColor(colored, 'd')).toBe('#0f0')
     expect(resolveColor(tree, 'c')).toBeNull()
+  })
+
+  it('isNodeInsideBoundingBox detecta colisão espacial corretamente', () => {
+    const rect = { x: 100, y: 200, width: 300, height: 150 }
+    expect(isNodeInsideBoundingBox({ x: 250, y: 275 }, rect)).toBe(true)
+    expect(isNodeInsideBoundingBox({ x: 100, y: 200 }, rect)).toBe(true)
+    expect(isNodeInsideBoundingBox({ x: 400, y: 350 }, rect)).toBe(true)
+    expect(isNodeInsideBoundingBox({ x: 99, y: 250 }, rect)).toBe(false)
+    expect(isNodeInsideBoundingBox({ x: 250, y: 351 }, rect)).toBe(false)
+  })
+
+  it('searchNodes filtra e classifica por título, tags e descrição com caminho hierárquico', () => {
+    const sample = [
+      node('root', null, { title: 'Álgebra Abstrata', tags: ['matemática'] }),
+      node('sub', 'root', {
+        title: 'Teoria de Grupos',
+        tags: ['simetria', 'estruturas'],
+        description: 'Estuda o Teorema de Lagrange e subgrupos normais.',
+      }),
+      node('other', null, {
+        title: 'Mecânica Clássica',
+        tags: ['física'],
+        description: 'Usa conceitos de simetria via Noether.',
+      }),
+    ]
+
+    expect(searchNodes(sample, '')).toHaveLength(3)
+
+    const byTitle = searchNodes(sample, 'Grupos')
+    expect(byTitle[0].node.id).toBe('sub')
+    expect(byTitle[0].matchType).toBe('title')
+    expect(byTitle[0].path).toEqual(['Álgebra Abstrata'])
+
+    const byTag = searchNodes(sample, '#simetria')
+    expect(byTag.map((r) => r.node.id)).toEqual(['sub', 'other'])
+    expect(byTag[0].matchType).toBe('tag')
+    expect(byTag[1].matchType).toBe('description')
+
+    const byDesc = searchNodes(sample, 'Lagrange')
+    expect(byDesc).toHaveLength(1)
+    expect(byDesc[0].node.id).toBe('sub')
+    expect(byDesc[0].matchType).toBe('description')
   })
 })
 

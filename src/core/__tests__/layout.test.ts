@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { computeNodeSizes, buildFlowElements, applyDagreLayout, findFreePosition } from '../layout'
+import {
+  computeNodeSizes,
+  buildFlowElements,
+  applyDagreLayout,
+  findFreePosition,
+  computeNodeBoundingBoxes,
+  findDropTargetNodeId,
+} from '../layout'
 import type { KnowledgeNode, KnowledgeEdge } from '../types'
 
 function makeNode(id: string, parentId: string | null = null, extra: Partial<KnowledgeNode['data']> = {}): KnowledgeNode {
@@ -100,10 +107,48 @@ describe('layout determinístico de contêineres', () => {
       { id: 'e1', source: 'childA', target: 'childB', label: 'conecta' },
     ]
 
-    const { flowEdges } = buildFlowElements(nodes, edges, { focusId: null, selectedId: null })
+    const { flowNodes, flowEdges } = buildFlowElements(nodes, edges, { focusId: null, selectedId: null })
+    expect(flowNodes.find((n) => n.id === 'rootA')?.width).toBe(264)
+    expect(flowNodes.find((n) => n.id === 'rootB')?.width).toBe(232)
+    expect(flowNodes[0].height).toBeGreaterThanOrEqual(112)
     expect(flowEdges).toHaveLength(1)
     expect(flowEdges[0].source).toBe('childA')
     expect(flowEdges[0].target).toBe('rootB') // elevado para o pai visível
+    expect(flowEdges[0].labelStyle).toBeDefined()
+    expect(flowEdges[0].labelBgStyle).toBeDefined()
+  })
+
+  it('findDropTargetNodeId identifica o contêiner mais específico e previne ciclos em drag-and-drop', () => {
+    const nodes = [
+      { ...makeNode('container'), position: { x: 0, y: 0 } },
+      makeNode('inner', 'container'),
+      { ...makeNode('dragged'), position: { x: 600, y: 0 } },
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, [], { focusId: null, selectedId: null })
+    const boxes = computeNodeBoundingBoxes(flowNodes)
+    const innerBox = boxes.get('inner')!
+
+    // Soltar no centro do filho interno deve escolher 'inner' (menor área) em vez de 'container'
+    const targetInner = findDropTargetNodeId(nodes, flowNodes, 'dragged', {
+      x: innerBox.x + 20,
+      y: innerBox.y + 20,
+    })
+    expect(targetInner).toBe('inner')
+
+    // Soltar no cabeçalho do contêiner (fora de 'inner') deve escolher 'container'
+    const targetOuter = findDropTargetNodeId(nodes, flowNodes, 'dragged', {
+      x: 10,
+      y: 10,
+    })
+    expect(targetOuter).toBe('container')
+
+    // Tentar arrastar 'container' para dentro de seu próprio filho 'inner' deve retornar null (I8)
+    const invalidCycle = findDropTargetNodeId(nodes, flowNodes, 'container', {
+      x: innerBox.x + 20,
+      y: innerBox.y + 20,
+    })
+    expect(invalidCycle).toBeNull()
   })
 })
 

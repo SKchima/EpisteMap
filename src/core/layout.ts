@@ -1,7 +1,7 @@
 import dagre from '@dagrejs/dagre'
 import { MarkerType, type Node as RFNode, type Edge as RFEdge } from '@xyflow/react'
-import type { KnowledgeNode, KnowledgeEdge, Position } from './types'
-import { getAncestorIds, resolveColor } from './graph'
+import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox } from './types'
+import { getAncestorIds, getSubtreeIds, resolveColor, canReparent, isNodeInsideBoundingBox } from './graph'
 
 export const LEAF_WIDTH = 232
 export const LEAF_HEIGHT = 112
@@ -64,6 +64,8 @@ export function computeNodeSizes(nodes: KnowledgeNode[]): Map<string, NodeSize> 
 export type BuildFlowOptions = {
   focusId: string | null
   selectedId: string | null
+  dropTargetId?: string | null
+  activeTag?: string | null
 }
 
 export function buildFlowElements(
@@ -71,7 +73,7 @@ export function buildFlowElements(
   edges: KnowledgeEdge[],
   options: BuildFlowOptions
 ): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
-  const { focusId, selectedId } = options
+  const { focusId, selectedId, dropTargetId = null, activeTag = null } = options
   const sizes = computeNodeSizes(nodes)
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
@@ -191,12 +193,22 @@ export function buildFlowElements(
     const childrenCount = nodes.filter((c) => c.parentId === n.id).length
     const color = resolveColor(nodes, n.id)
 
+    let isDimmed = false
+    if (activeTag) {
+      const subtreeIds = getSubtreeIds(nodes, n.id)
+      const hasTagInSubtree = nodes.some(
+        (cand) => subtreeIds.has(cand.id) && cand.data.tags.includes(activeTag)
+      )
+      isDimmed = !hasTagInSubtree
+    }
+
     flowNodes.push({
       id: n.id,
       type: 'compound',
       position: pos,
+      width: size.width,
+      height: size.height,
       parentId: parentIdProp,
-      extent: parentIdProp ? 'parent' : undefined,
       selected: n.id === selectedId,
       style: {
         width: size.width,
@@ -210,6 +222,9 @@ export function buildFlowElements(
         color,
         childCount: childrenCount,
         isContainer: childrenCount > 0 && !n.data.collapsed,
+        isDropTarget: dropTargetId === n.id,
+        isDimmed,
+        pdfAttachment: n.data.pdfAttachment,
         width: size.width,
         height: size.height,
       },
@@ -241,21 +256,36 @@ export function buildFlowElements(
     edgeDedupe.add(key)
 
     const isElevated = sourceVis !== edge.source || targetVis !== edge.target
+    const isEdgeSelected = edge.id === selectedId
+    const strokeColor = isEdgeSelected ? '#38bdf8' : isElevated ? '#64748b' : '#6366f1'
 
     flowEdges.push({
       id: edge.id,
       source: sourceVis,
       target: targetVis,
       label: edge.label,
+      selected: isEdgeSelected,
       animated: isElevated,
+      labelStyle: {
+        fill: '#e2e8f0',
+        fontSize: 11,
+        fontWeight: 500,
+      },
+      labelBgStyle: {
+        fill: '#151822',
+        stroke: isEdgeSelected ? '#38bdf8' : '#2d3448',
+        strokeWidth: 1,
+      },
+      labelBgPadding: [4, 6],
+      labelBgBorderRadius: 4,
       style: {
-        stroke: isElevated ? '#64748b' : '#6366f1',
-        strokeWidth: 2,
+        stroke: strokeColor,
+        strokeWidth: isEdgeSelected ? 3 : 2,
         strokeDasharray: isElevated ? '5,5' : undefined,
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: isElevated ? '#64748b' : '#6366f1',
+        color: strokeColor,
         width: 16,
         height: 16,
       },
@@ -263,6 +293,47 @@ export function buildFlowElements(
   }
 
   return { flowNodes, flowEdges }
+}
+
+export function computeNodeBoundingBoxes(flowNodes: RFNode[]): Map<string, BoundingBox> {
+  const boxes = new Map<string, BoundingBox>()
+  for (const fn of flowNodes) {
+    const parentBox = fn.parentId ? boxes.get(fn.parentId) : undefined
+    const absX = (parentBox?.x || 0) + fn.position.x
+    const absY = (parentBox?.y || 0) + fn.position.y
+    const data = (fn.data || {}) as { width?: number; height?: number }
+    const width = data.width || fn.width || LEAF_WIDTH
+    const height = data.height || fn.height || LEAF_HEIGHT
+    boxes.set(fn.id, { x: absX, y: absY, width, height })
+  }
+  return boxes
+}
+
+export function findDropTargetNodeId(
+  nodes: KnowledgeNode[],
+  flowNodes: RFNode[],
+  draggedId: string,
+  dropPoint: Position
+): string | null {
+  const boxes = computeNodeBoundingBoxes(flowNodes)
+  let bestTargetId: string | null = null
+  let smallestArea = Infinity
+
+  for (const fn of flowNodes) {
+    if (fn.id === draggedId) continue
+    if (!canReparent(nodes, draggedId, fn.id)) continue
+    const box = boxes.get(fn.id)
+    if (!box) continue
+    if (isNodeInsideBoundingBox(dropPoint, box)) {
+      const area = box.width * box.height
+      if (area < smallestArea) {
+        smallestArea = area
+        bestTargetId = fn.id
+      }
+    }
+  }
+
+  return bestTargetId
 }
 
 export function findFreePosition(
