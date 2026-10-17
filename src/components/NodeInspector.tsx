@@ -18,6 +18,9 @@ import {
   AlertTriangle,
   ArrowRight,
   Paperclip,
+  ChevronLeft,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react'
 import { useGraphStore } from '../core/graphStore'
 import { getBacklinks, findNodeByTitle, canReparent, getSubtreeIds } from '../core/graph'
@@ -74,6 +77,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
   const attachPdf = useGraphStore((s) => s.attachPdf)
   const removePdf = useGraphStore((s) => s.removePdf)
   const setPdfPage = useGraphStore((s) => s.setPdfPage)
+  const isInspectorOpen = useGraphStore((s) => s.isInspectorOpen)
+  const toggleInspector = useGraphStore((s) => s.toggleInspector)
 
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview')
   const [activeInspectorView, setActiveInspectorView] = useState<'details' | 'pdf'>('details')
@@ -228,6 +233,110 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
     />
   )
 
+  // Caso o Inspetor esteja recolhido, exibe a barra vertical minimalista
+  if (!isInspectorOpen) {
+    return (
+      <aside
+        className="epistemap-inspector-collapsed"
+        onClick={toggleInspector}
+        role="complementary"
+        aria-label="Inspetor de Conhecimento Recolhido"
+        title="Clique para expandir o Inspetor de Conhecimento (Ctrl+\)"
+        style={{
+          width: '36px',
+          height: 'calc(100vh - 52px)',
+          background: asideBg,
+          borderLeft: asideBorder,
+          color: textMuted,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 0',
+          cursor: 'pointer',
+          flexShrink: 0,
+          transition: 'background-color 0.15s ease, width 0.2s ease',
+          userSelect: 'none',
+          zIndex: 40,
+        }}
+      >
+        {/* Botão de Expandir no Topo */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleInspector()
+            }}
+            aria-label="Expandir inspetor de conhecimento"
+            title="Expandir Inspetor (Ctrl+\)"
+            style={{
+              background: btnBg,
+              border: btnBorder,
+              color: textColor,
+              borderRadius: '5px',
+              padding: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {selectedNode && (
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: isHighContrast ? '#000000' : selectedNode.data.color || '#6366f1',
+                boxShadow: selectedNode.data.color ? `0 0 6px ${selectedNode.data.color}` : 'none',
+              }}
+              title={`Conceito selecionado: ${selectedNode.data.title}`}
+            />
+          )}
+        </div>
+
+        {/* Rótulo Vertical */}
+        <div
+          style={{
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '11px',
+            fontWeight: 600,
+            letterSpacing: '0.6px',
+            textTransform: 'uppercase',
+            color: selectedNode ? textColor : textMuted,
+          }}
+        >
+          <span style={{ whiteSpace: 'nowrap' }}>
+            {selectedNode ? selectedNode.data.title : 'Inspetor'}
+          </span>
+        </div>
+
+        {/* Atalho no rodapé */}
+        <div
+          title="Atalho: Ctrl+\ ou Cmd+\"
+          style={{
+            fontSize: '10px',
+            padding: '2px 4px',
+            borderRadius: '3px',
+            background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#1e2433',
+            border: btnBorder,
+            color: textMuted,
+          }}
+        >
+          <PanelRightOpen size={13} />
+        </div>
+      </aside>
+    )
+  }
+
   // Caso uma aresta esteja selecionada, exibe o Inspetor de Relação Semântica
   if (selectedEdge) {
     const sourceNode = nodes.find((n) => n.id === selectedEdge.source)
@@ -274,20 +383,41 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
               Relação Semântica (Aresta)
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => select(null)}
-            aria-label="Fechar inspetor"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: textMuted,
-              cursor: 'pointer',
-              padding: '4px',
-            }}
-          >
-            <X size={16} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              type="button"
+              onClick={toggleInspector}
+              aria-label="Recolher inspetor"
+              title="Recolher inspetor lateral (Ctrl+\)"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: textMuted,
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <PanelRightClose size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => select(null)}
+              aria-label="Fechar inspetor"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: textMuted,
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -428,17 +558,42 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
       >
         {resizerHandle}
         <div>
-          <h3
+          <div
             style={{
-              fontSize: '14px',
-              color: textColor,
-              marginTop: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: '12px',
-              fontWeight: 600,
             }}
           >
-            Inspetor de Conhecimento
-          </h3>
+            <h3
+              style={{
+                fontSize: '14px',
+                color: textColor,
+                margin: 0,
+                fontWeight: 600,
+              }}
+            >
+              Inspetor de Conhecimento
+            </h3>
+            <button
+              type="button"
+              onClick={toggleInspector}
+              aria-label="Recolher inspetor"
+              title="Recolher inspetor lateral (Ctrl+\)"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: textMuted,
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <PanelRightClose size={15} />
+            </button>
+          </div>
           <p style={{ lineHeight: 1.5, marginBottom: '16px' }}>
             Selecione qualquer conceito ou aresta no mapa para visualizar e editar sua estrutura interna, sub-objetos e equações.
           </p>
@@ -713,7 +868,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <button
             type="button"
             onClick={handleDrillDown}
@@ -733,6 +888,23 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
           >
             <Eye size={12} />
             Focar
+          </button>
+          <button
+            type="button"
+            onClick={toggleInspector}
+            aria-label="Recolher inspetor"
+            title="Recolher inspetor lateral (Ctrl+\)"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: textMuted,
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <PanelRightClose size={15} />
           </button>
           <button
             type="button"

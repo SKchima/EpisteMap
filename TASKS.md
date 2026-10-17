@@ -85,7 +85,14 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - Altura base dos cartões de objetos dobrada de 112px para 224px (`LEAF_HEIGHT = 224`), gerando contêineres proporcionais e espaçosos de 300px.
   - Sub-objetos no nível de zoom padrão exibem exclusivamente seus títulos e identificadores, omitindo conteúdos e descrições textuais ruidosas ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)).
   - Conteúdos ricos e fórmulas KaTeX revelados ao aproximar com zoom in (nível micro >= 1.30) ou via Inspetor lateral.
-  - Suíte de 156 testes aprovada no Vitest e 0 warnings no Oxlint.
+- [x] **Fase 14 - Inspetor de Conhecimento Recolhível & Dock Rail Acessível**:
+  - Painel lateral do Inspetor (`NodeInspector.tsx`) recolhível para liberar espaço do canvas do React Flow.
+  - No estado recolhido, recolhe para um dock rail elegante de 36px na margem direita com título vertical, indicador de cor do nó selecionado e botão de expansão (`ChevronLeft`).
+  - No estado expandido, inclui botão explícito de recolhimento (`PanelRightClose`) em todas as visualizações do cabeçalho (vazio, nó selecionado e aresta selecionada).
+  - Botão de alternância "Inspetor" com ícone dinâmico integrado na barra superior (`BreadcrumbsBar.tsx`).
+  - Atalho global de teclado `Cmd+\` / `Ctrl+\` registrado no canvas (`App.tsx`) e catalogado no modal de atalhos (`SettingsModal.tsx`).
+  - Preferência do usuário persistida localmente em `localStorage('epistemap:inspector-open')`.
+  - Suíte de 157 testes aprovada no Vitest e 0 warnings no Oxlint.
 
 ### [/] Em Andamento
 

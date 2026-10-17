@@ -102,6 +102,9 @@ export interface EpistemapStore {
   setTheme: (theme: ThemeMode) => void
   navigateToNode: (nodeId: string) => void
   organizeMap: () => void
+  isInspectorOpen: boolean
+  toggleInspector: () => void
+  setInspectorOpen: (open: boolean) => void
 
   // Histórico (Undo/Redo via Zundo)
   undo: () => void

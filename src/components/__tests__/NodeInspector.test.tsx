@@ -168,4 +168,36 @@ describe('NodeInspector (Inspetor de Conhecimento)', () => {
     fireEvent.doubleClick(resizer)
     expect(resizer).toHaveAttribute('aria-valuenow', '380')
   })
+
+  it('deve permitir recolher e expandir o painel lateral com dock rail acessível', () => {
+    localStorage.clear()
+    useGraphStore.getState().setInspectorOpen(true)
+    const { rerender } = render(<NodeInspector />)
+
+    // Aberto: exibe botão de recolher
+    const collapseBtn = screen.getByRole('button', { name: /Recolher inspetor/i })
+    expect(collapseBtn).toBeInTheDocument()
+
+    // Clicar em recolher
+    fireEvent.click(collapseBtn)
+    expect(useGraphStore.getState().isInspectorOpen).toBe(false)
+    expect(localStorage.getItem('epistemap:inspector-open')).toBe('false')
+
+    rerender(<NodeInspector />)
+
+    // Modo recolhido: exibe dock rail de 36px com label acessível
+    const dockRail = screen.getByLabelText('Inspetor de Conhecimento Recolhido')
+    expect(dockRail).toBeInTheDocument()
+    const expandBtn = screen.getByRole('button', { name: /Expandir inspetor de conhecimento/i })
+    expect(expandBtn).toBeInTheDocument()
+
+    // Clicar no botão expandir deve restaurar o painel completo
+    fireEvent.click(expandBtn)
+    expect(useGraphStore.getState().isInspectorOpen).toBe(true)
+    expect(localStorage.getItem('epistemap:inspector-open')).toBe('true')
+
+    rerender(<NodeInspector />)
+    expect(screen.getByText('Inspetor de Conhecimento')).toBeInTheDocument()
+  })
 })
+

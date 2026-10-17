@@ -11,6 +11,21 @@ import {
 import { findFreePosition, applyDagreLayout } from './layout'
 
 const THEME_STORAGE_KEY = 'epistemap:theme'
+const INSPECTOR_STORAGE_KEY = 'epistemap:inspector-open'
+
+export function getInitialInspectorOpen(): boolean {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(INSPECTOR_STORAGE_KEY)
+      if (saved !== null) {
+        return saved === 'true'
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return true
+}
 
 export function getInitialTheme(): ThemeMode {
   try {
@@ -93,6 +108,7 @@ export const useGraphStore = create<EpistemapStore>()(
       focusId: null,
       activeTag: null,
       theme: getInitialTheme(),
+      isInspectorOpen: getInitialInspectorOpen(),
       canUndo: false,
       canRedo: false,
 
@@ -630,6 +646,29 @@ export const useGraphStore = create<EpistemapStore>()(
         set((state) => ({
           nodes: applyDagreLayout(state.nodes, state.edges),
         }))
+      },
+
+      toggleInspector: () => {
+        const next = !get().isInspectorOpen
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(INSPECTOR_STORAGE_KEY, String(next))
+          }
+        } catch {
+          // ignore
+        }
+        set({ isInspectorOpen: next })
+      },
+
+      setInspectorOpen: (open: boolean) => {
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(INSPECTOR_STORAGE_KEY, String(open))
+          }
+        } catch {
+          // ignore
+        }
+        set({ isInspectorOpen: open })
       },
 
       undo: () => {

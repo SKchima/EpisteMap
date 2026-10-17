@@ -18,6 +18,8 @@ import {
   FileCode,
   Settings,
   Keyboard,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react'
 import { getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
@@ -55,6 +57,8 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const importBatch = useGraphStore((s) => s.importBatch)
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
+  const isInspectorOpen = useGraphStore((s) => s.isInspectorOpen)
+  const toggleInspector = useGraphStore((s) => s.toggleInspector)
 
   const [isExportingImage, setIsExportingImage] = useState(false)
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
@@ -891,6 +895,42 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             <span style={{ fontWeight: 500 }}>{isSyncing ? 'Sync...' : 'Vault'}</span>
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={toggleInspector}
+          title={isInspectorOpen ? 'Recolher Inspetor de Conhecimento (Ctrl+\\)' : 'Expandir Inspetor de Conhecimento (Ctrl+\\)'}
+          aria-label={isInspectorOpen ? 'Recolher inspetor lateral' : 'Expandir inspetor lateral'}
+          data-testid="toggle-inspector"
+          style={{
+            background: isInspectorOpen
+              ? (isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#283144')
+              : btnBg,
+            color: isInspectorOpen && isHighContrast ? '#ffffff' : textColor,
+            border: btnBorder,
+            borderRadius: '5px',
+            padding: '5px 8px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            transition: 'background-color 0.15s ease',
+          }}
+        >
+          {isInspectorOpen ? (
+            <PanelRightClose
+              size={13}
+              color={isHighContrast ? (isInspectorOpen ? '#ffffff' : '#000000') : '#818cf8'}
+            />
+          ) : (
+            <PanelRightOpen
+              size={13}
+              color={isHighContrast ? '#000000' : '#94a3b8'}
+            />
+          )}
+          <span style={{ fontSize: '11px', fontWeight: 500 }}>Inspetor</span>
+        </button>
 
         {onOpenSettings && (
           <button

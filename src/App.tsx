@@ -59,6 +59,7 @@ const EpistemapCanvas: React.FC = () => {
   const loadGraph = useGraphStore((s) => s.loadGraph)
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
+  const toggleInspector = useGraphStore((s) => s.toggleInspector)
 
   const { screenToFlowPosition, fitView } = useReactFlow()
 
@@ -361,6 +362,13 @@ const EpistemapCanvas: React.FC = () => {
         return
       }
 
+      // Cmd+\ / Ctrl+\: Alternar Inspetor Lateral de Conhecimento
+      if (isMod && (e.key === '\\' || e.key === '|')) {
+        e.preventDefault()
+        toggleInspector()
+        return
+      }
+
       const target = e.target as HTMLElement
       const isEditingInput =
         target.tagName === 'INPUT' ||
@@ -470,6 +478,7 @@ const EpistemapCanvas: React.FC = () => {
     addRootNode,
     removeEdge,
     removeNode,
+    toggleInspector,
   ])
 
   const pendingDeleteNode = pendingDeleteNodeId
