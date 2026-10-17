@@ -6,22 +6,17 @@ import {
   Plus,
   Download,
   Upload,
-  LayoutGrid,
   Search,
   Undo2,
   Redo2,
   Image as ImageIcon,
-  Tag,
   Moon,
   Sun,
   Contrast,
   FileCode,
   Settings,
-  Keyboard,
   PanelRightClose,
   PanelRightOpen,
-  Pencil,
-  Eye,
 } from 'lucide-react'
 import { getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
@@ -264,6 +259,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const btnBg = isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#191e2c'
   const btnBorder = isHighContrast ? '1.5px solid #000000' : isLight ? '1px solid #cbd5e1' : '1px solid #2e364f'
   const textColor = isHighContrast ? '#000000' : isLight ? '#0f172a' : '#cbd5e1'
+  const dividerColor = isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#262d3d'
 
   const menuBg = isHighContrast ? '#ffffff' : isLight ? '#ffffff' : '#181c28'
   const menuBorder = isHighContrast ? '2px solid #000000' : isLight ? '1px solid #cbd5e1' : '1px solid #2d354a'
@@ -292,7 +288,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
     >
       {/* Logotipo e Trilha de Breadcrumbs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '6px' }}>
           <img
             src="/favicon.svg"
             alt="EpisteMap Logo"
@@ -305,17 +301,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           />
           <span style={{ fontWeight: 700, fontSize: '15px', color: '#818cf8', letterSpacing: '-0.3px' }}>
             EpisteMap
-          </span>
-          <span
-            style={{
-              fontSize: '11px',
-              color: isHighContrast ? '#000000' : isLight ? '#475569' : '#64748b',
-              border: isHighContrast ? '1.5px solid #000000' : isLight ? '1px solid #cbd5e1' : '1px solid #334155',
-              borderRadius: '4px',
-              padding: '1px 5px',
-            }}
-          >
-            v2.1
           </span>
         </div>
 
@@ -419,7 +404,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
               background: btnBg,
               border: activeTag
                 ? isHighContrast
@@ -427,10 +411,9 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                   : '1px solid #818cf8'
                 : btnBorder,
               borderRadius: '5px',
-              padding: '3px 7px',
+              padding: '3px 8px',
             }}
           >
-            <Tag size={12} color={activeTag ? (isHighContrast ? '#000' : '#818cf8') : (isHighContrast ? '#000' : '#64748b')} />
             <select
               aria-label="Filtrar por tag"
               value={activeTag || ''}
@@ -438,8 +421,9 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: activeTag ? (isHighContrast ? '#000' : '#f8fafc') : textColor,
+                color: activeTag ? (isHighContrast ? '#000' : '#818cf8') : textColor,
                 fontSize: '11px',
+                fontWeight: activeTag ? 600 : 400,
                 outline: 'none',
                 cursor: 'pointer',
               }}
@@ -456,7 +440,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           </div>
         )}
 
-        {/* Alternador de Modo: Edição vs Visualização */}
+        {/* Alternador de Modo: Edição vs Visualização (Tipografia Limpa) */}
         <div
           role="group"
           aria-label="Modo de Operação"
@@ -493,17 +477,13 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                       : '#94a3b8',
               border: 'none',
               borderRadius: '4px',
-              padding: '3px 8px',
+              padding: '3px 9px',
               fontSize: '11px',
               fontWeight: editorMode === 'edit' ? 600 : 500,
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
               transition: 'all 0.15s ease',
             }}
           >
-            <Pencil size={11} />
             <span>Edição</span>
           </button>
           <button
@@ -529,24 +509,23 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                       : '#94a3b8',
               border: 'none',
               borderRadius: '4px',
-              padding: '3px 8px',
+              padding: '3px 9px',
               fontSize: '11px',
               fontWeight: editorMode === 'view' ? 600 : 500,
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
               transition: 'all 0.15s ease',
             }}
           >
-            <Eye size={11} />
             <span>Visualização</span>
           </button>
         </div>
 
+        {/* Divisor Semântico */}
+        <div style={{ width: '1px', height: '18px', backgroundColor: dividerColor }} />
+
         {/* Undo / Redo (apenas em modo de edição) */}
         {editorMode === 'edit' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
             <button
               type="button"
               onClick={undo}
@@ -555,14 +534,14 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               aria-label="Desfazer"
               style={{
                 background: btnBg,
-                color: canUndo ? textColor : (isHighContrast ? '#888' : '#475569'),
+                color: canUndo ? textColor : isHighContrast ? '#888888' : '#475569',
                 border: btnBorder,
                 borderRadius: '5px 0 0 5px',
                 padding: '5px 7px',
                 cursor: canUndo ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                opacity: canUndo ? 1 : 0.5,
+                opacity: canUndo ? 1 : 0.45,
               }}
             >
               <Undo2 size={13} />
@@ -575,7 +554,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               aria-label="Refazer"
               style={{
                 background: btnBg,
-                color: canRedo ? textColor : (isHighContrast ? '#888' : '#475569'),
+                color: canRedo ? textColor : isHighContrast ? '#888888' : '#475569',
                 borderTop: btnBorder,
                 borderRight: btnBorder,
                 borderBottom: btnBorder,
@@ -585,41 +564,13 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                 cursor: canRedo ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                opacity: canRedo ? 1 : 0.5,
+                opacity: canRedo ? 1 : 0.45,
               }}
             >
               <Redo2 size={13} />
             </button>
           </div>
         )}
-
-        {/* Seletor de Tema Visual (3 Modos: Escuro, Claro, Alto Contraste Papel) */}
-        <button
-          type="button"
-          onClick={handleToggleTheme}
-          title={`Tema: ${theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Alto Contraste Papel'}. Clique para alternar.`}
-          aria-label="Alternar tema visual"
-          data-testid="theme-toggle"
-          style={{
-            background: btnBg,
-            color: textColor,
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-          }}
-        >
-          {theme === 'dark' && <Moon size={13} color="#818cf8" />}
-          {theme === 'light' && <Sun size={13} color="#f59e0b" />}
-          {theme === 'high-contrast' && <Contrast size={13} color="#000000" />}
-          <span style={{ fontSize: '11px', fontWeight: 500 }}>
-            {theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Papel'}
-          </span>
-        </button>
 
         {/* Ações de Mutação do Grafo (apenas em modo de edição) */}
         {editorMode === 'edit' && (
@@ -630,41 +581,38 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               title="Distribuir nós e subgrafos no canvas (Auto-layout Dagre)"
               style={{
                 background: btnBg,
-                color: isHighContrast ? '#000000' : '#38bdf8',
+                color: isHighContrast ? '#000000' : isLight ? '#0369a1' : '#38bdf8',
                 border: btnBorder,
                 borderRadius: '5px',
-                padding: '5px 10px',
-                fontSize: '12px',
+                padding: '5px 9px',
+                fontSize: '11px',
                 fontWeight: 500,
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
               }}
             >
-              <LayoutGrid size={13} />
               Organizar Mapa
             </button>
 
             <button
               type="button"
               onClick={handleCreateRoot}
+              title="Criar novo conceito raiz no mapa"
               style={{
                 background: isHighContrast ? '#000000' : '#4f46e5',
-                color: '#fff',
+                color: '#ffffff',
                 border: isHighContrast ? '2px solid #000000' : 'none',
                 borderRadius: '5px',
                 padding: '5px 10px',
-                fontSize: '12px',
-                fontWeight: 500,
+                fontSize: '11px',
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '4px',
               }}
             >
-              <Plus size={14} />
-              Novo Conceito
+              <Plus size={13} />
+              <span>Novo Conceito</span>
             </button>
           </>
         )}
@@ -695,26 +643,17 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '4px',
               transition: 'background-color 0.15s ease',
             }}
           >
-            <Download
-              size={13}
-              color={
-                isHighContrast
-                  ? isFileMenuOpen
-                    ? '#ffffff'
-                    : '#000000'
-                  : '#38bdf8'
-              }
-            />
             <span>Arquivo</span>
             <ChevronDown
-              size={12}
+              size={11}
               style={{
                 transform: isFileMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'transform 0.2s ease',
+                opacity: 0.7,
               }}
             />
           </button>
@@ -930,6 +869,37 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           )}
         </div>
 
+        {/* Divisor Semântico */}
+        <div style={{ width: '1px', height: '18px', backgroundColor: dividerColor }} />
+
+        {/* Seletor de Tema Visual (3 Modos: Escuro, Claro, Alto Contraste Papel) */}
+        <button
+          type="button"
+          onClick={handleToggleTheme}
+          title={`Tema: ${theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Alto Contraste Papel'}. Clique para alternar.`}
+          aria-label="Alternar tema visual"
+          data-testid="theme-toggle"
+          style={{
+            background: btnBg,
+            color: textColor,
+            border: btnBorder,
+            borderRadius: '5px',
+            padding: '5px 8px',
+            fontSize: '11px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          {theme === 'dark' && <Moon size={13} color="#818cf8" />}
+          {theme === 'light' && <Sun size={13} color="#f59e0b" />}
+          {theme === 'high-contrast' && <Contrast size={13} color="#000000" />}
+          <span style={{ fontSize: '11px', fontWeight: 500 }}>
+            {theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Papel'}
+          </span>
+        </button>
+
         {onOpenShortcuts && (
           <button
             type="button"
@@ -948,7 +918,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               gap: '4px',
             }}
           >
-            <Keyboard size={13} />
             <span style={{ fontSize: '11px', fontWeight: 500 }}>Atalhos</span>
             <kbd
               style={{

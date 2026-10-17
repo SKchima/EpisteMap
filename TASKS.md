@@ -117,4 +117,19 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
 
 ### [ ] A Fazer (Backlog Futuro)
 
-- [ ] Exportação vetorial direta em formato `.svg` / LaTeX TikZ.
+#### Exportação & Interoperabilidade Acadêmica / LaTeX
+- [ ] **Exportação TikZ / PGFPlots para LaTeX**: Geração de código `\begin{tikzpicture}` estruturado a partir da geometria e arestas do grafo para inclusão direta em compêndios, artigos e teses.
+- [ ] **Exportação Vetorial Nativa (`.svg`)**: Exportação vetorial nítida em qualquer escala com tipografia preservada e renderização KaTeX vetorizada.
+- [ ] **Exportador Bidirecional para `.tex`**: Exportar o grafo de volta como documento `.tex` com seções, subseções e ambientes matemáticos (`definicao`, `teorema`, `corolario`) seguindo a ordem topológica da trilha.
+- [ ] **Live Sync com Compêndio LaTeX via SyncTeX**: Sincronização automática em segundo plano (`epistemap dev`) ao recompilar documentos LaTeX com `latexmk`.
+
+#### Modelagem Matemática & Grafo de Conhecimento (DAG)
+- [ ] **Trilha de Pré-requisitos & Caminho Crítico (DAG Highlighting)**: Realce com brilho (*glow*) de todos os axiomas, definições e lemas precursores necessários para demonstrar um teorema selecionado, esmaecendo nós não relacionados.
+- [ ] **Tipagem Semântica Formal de Arestas**: Estilos geométricos específicos para relações formais ($\implies$ dedução, $\iff$ equivalência, generalização/herança e dependência fraca).
+- [ ] **Detector de Ciclos em Pré-requisitos**: Validação em tempo real para impedir dependências circulares em cadeias de pré-requisitos lógicos.
+
+#### Ergonomia de Estudo, Navegação & Canvas
+- [ ] **Modo Apresentação / Trilha Guiada (Tour Mode)**: Percorrer conceitos em sequência ordenada ($1 \to 2 \to 3$) com setas do teclado (`←` e `→`) e animação suave de câmera.
+- [ ] **Minimapa Flutuante Translúcido (Overview Radar)**: Radar recolhível no canto inferior para navegação ágil em mapas extensos.
+- [ ] **Filtro de Destaque no Canvas por Tag / Tipo**: Nós fora do filtro ativo recebem opacidade reduzida (15%), isolando visualmente subconjuntos de conceitos (ex: apenas `#teorema`).
+- [ ] **Guias Magnéticas de Alinhamento (Smart Guides / Snap)**: Alinhamento automático e guias inteligentes durante o arrasto manual de conceitos raiz.
