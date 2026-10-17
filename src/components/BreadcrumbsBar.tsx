@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import {
   ChevronRight,
+  ChevronDown,
   Home,
   Plus,
   Download,
@@ -56,6 +57,30 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const redo = useGraphStore((s) => s.redo)
 
   const [isExportingImage, setIsExportingImage] = useState(false)
+  const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
+  const fileMenuRef = useRef<HTMLDivElement>(null)
+  const jsonInputRef = useRef<HTMLInputElement>(null)
+  const texInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!isFileMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (fileMenuRef.current && !fileMenuRef.current.contains(e.target as Node)) {
+        setIsFileMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isFileMenuOpen])
 
   const breadcrumbs = useMemo(() => {
     return getBreadcrumbs(nodes, focusId)
@@ -231,6 +256,16 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const btnBg = isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#191e2c'
   const btnBorder = isHighContrast ? '1.5px solid #000000' : isLight ? '1px solid #cbd5e1' : '1px solid #2e364f'
   const textColor = isHighContrast ? '#000000' : isLight ? '#0f172a' : '#cbd5e1'
+
+  const menuBg = isHighContrast ? '#ffffff' : isLight ? '#ffffff' : '#181c28'
+  const menuBorder = isHighContrast ? '2px solid #000000' : isLight ? '1px solid #cbd5e1' : '1px solid #2d354a'
+  const menuShadow = isHighContrast
+    ? 'none'
+    : isLight
+      ? '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)'
+      : '0 14px 32px -4px rgba(0,0,0,0.65), 0 4px 12px -2px rgba(0,0,0,0.45)'
+  const menuSectionLabelColor = isHighContrast ? '#000000' : isLight ? '#64748b' : '#64748b'
+  const itemDescColor = isHighContrast ? '#333333' : isLight ? '#64748b' : '#8592a6'
 
   return (
     <header
@@ -531,100 +566,263 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           Novo Conceito
         </button>
 
-        {/* Importador Web direto de .tex */}
-        <label
-          title="Importar compêndio LaTeX (.tex)"
-          style={{
-            background: btnBg,
-            color: isHighContrast ? '#000000' : '#818cf8',
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <FileCode size={13} />
-          <span>Importar .tex</span>
+        {/* Menu Dropdown de Arquivo (Importar, Exportar, PNG 2x) */}
+        <div ref={fileMenuRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setIsFileMenuOpen((prev) => !prev)}
+            aria-haspopup="true"
+            aria-expanded={isFileMenuOpen}
+            aria-label="Menu Arquivo"
+            title="Menu de Arquivo: Exportar JSON/PNG 2x e Importar JSON/LaTeX"
+            style={{
+              background: isFileMenuOpen
+                ? isHighContrast
+                  ? '#000000'
+                  : isLight
+                    ? '#e2e8f0'
+                    : '#283144'
+                : btnBg,
+              color: isFileMenuOpen && isHighContrast ? '#ffffff' : textColor,
+              border: btnBorder,
+              borderRadius: '5px',
+              padding: '5px 9px',
+              fontSize: '12px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              transition: 'background-color 0.15s ease',
+            }}
+          >
+            <Download
+              size={13}
+              color={
+                isHighContrast
+                  ? isFileMenuOpen
+                    ? '#ffffff'
+                    : '#000000'
+                  : '#38bdf8'
+              }
+            />
+            <span>Arquivo</span>
+            <ChevronDown
+              size={12}
+              style={{
+                transform: isFileMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease',
+              }}
+            />
+          </button>
+
+          {/* Inputs de arquivo ocultos acionados pelas opções do menu */}
           <input
+            ref={texInputRef}
             type="file"
             accept=".tex"
             onChange={handleImportTex}
             style={{ display: 'none' }}
           />
-        </label>
-
-        <button
-          type="button"
-          onClick={handleExportPNG}
-          disabled={isExportingImage || nodes.length === 0}
-          title="Exportar Grafo Inteiro em PNG Alta Resolução (2x Retina)"
-          style={{
-            background: btnBg,
-            color: isHighContrast ? '#000000' : '#10b981',
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '12px',
-            cursor: isExportingImage || nodes.length === 0 ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            opacity: isExportingImage || nodes.length === 0 ? 0.6 : 1,
-          }}
-        >
-          <ImageIcon size={13} />
-          {isExportingImage ? 'Exportando...' : 'PNG 2x'}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleExportJSON}
-          title="Exportar mapa como JSON"
-          style={{
-            background: btnBg,
-            color: textColor,
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <Download size={13} />
-          JSON
-        </button>
-
-        <label
-          title="Importar mapa JSON"
-          style={{
-            background: btnBg,
-            color: textColor,
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <Upload size={13} />
-          Importar
           <input
+            ref={jsonInputRef}
             type="file"
             accept=".json"
             onChange={handleImportJSON}
             style={{ display: 'none' }}
           />
-        </label>
+
+          {isFileMenuOpen && (
+            <div
+              role="menu"
+              className="epistemap-dropdown-menu"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                width: '230px',
+                backgroundColor: menuBg,
+                border: menuBorder,
+                borderRadius: '7px',
+                boxShadow: menuShadow,
+                padding: '6px',
+                zIndex: 1000,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+              }}
+            >
+              {/* Seção Exportar */}
+              <div
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  color: menuSectionLabelColor,
+                  padding: '4px 8px 2px 8px',
+                }}
+              >
+                Exportar
+              </div>
+
+              <button
+                type="button"
+                role="menuitem"
+                className="epistemap-dropdown-item"
+                disabled={isExportingImage || nodes.length === 0}
+                onClick={() => {
+                  setIsFileMenuOpen(false)
+                  handleExportPNG()
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '6px 8px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: textColor,
+                  fontSize: '12px',
+                  cursor: isExportingImage || nodes.length === 0 ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  opacity: isExportingImage || nodes.length === 0 ? 0.5 : 1,
+                }}
+              >
+                <ImageIcon size={14} color="#10b981" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>
+                    {isExportingImage ? 'Exportando PNG...' : 'Exportar PNG 2x'}
+                  </div>
+                  <div style={{ fontSize: '10px', color: itemDescColor }}>
+                    Imagem HD Retina do mapa
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                className="epistemap-dropdown-item"
+                onClick={() => {
+                  setIsFileMenuOpen(false)
+                  handleExportJSON()
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '6px 8px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: textColor,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Download size={14} color="#38bdf8" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>Exportar JSON</div>
+                  <div style={{ fontSize: '10px', color: itemDescColor }}>
+                    Backup estruturado completo
+                  </div>
+                </div>
+              </button>
+
+              {/* Separador */}
+              <div
+                style={{
+                  height: '1px',
+                  backgroundColor: isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#262d3d',
+                  margin: '4px 4px',
+                }}
+              />
+
+              {/* Seção Importar */}
+              <div
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  color: menuSectionLabelColor,
+                  padding: '4px 8px 2px 8px',
+                }}
+              >
+                Importar
+              </div>
+
+              <button
+                type="button"
+                role="menuitem"
+                className="epistemap-dropdown-item"
+                onClick={() => {
+                  setIsFileMenuOpen(false)
+                  texInputRef.current?.click()
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '6px 8px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: textColor,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <FileCode size={14} color="#818cf8" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>Importar .tex</div>
+                  <div style={{ fontSize: '10px', color: itemDescColor }}>
+                    Documento ou compêndio LaTeX
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                className="epistemap-dropdown-item"
+                onClick={() => {
+                  setIsFileMenuOpen(false)
+                  jsonInputRef.current?.click()
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '6px 8px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: textColor,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Upload size={14} color="#f59e0b" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>Importar JSON</div>
+                  <div style={{ fontSize: '10px', color: itemDescColor }}>
+                    Restaurar mapa de arquivo .json
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
 
         {onOpenShortcuts && (
           <button

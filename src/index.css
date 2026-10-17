@@ -209,3 +209,42 @@ code {
 .react-flow__attribution {
   display: none;
 }
+
+/* EpisteMap Dropdown Menu Styles */
+.epistemap-dropdown-menu {
+  animation: epistemap-dropdown-fade 0.12s ease-out;
+}
+
+@keyframes epistemap-dropdown-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.epistemap-dropdown-item {
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+:root[data-theme="dark"] .epistemap-dropdown-item:hover,
+:root .epistemap-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] .epistemap-dropdown-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="high-contrast"] .epistemap-dropdown-item:hover {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="high-contrast"] .epistemap-dropdown-item:hover * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}

@@ -51,7 +51,10 @@ describe('BreadcrumbsBar (Barra Superior de Navegação, Tags, Histórico e Expo
 
     render(<BreadcrumbsBar />)
 
-    const pngBtn = screen.getByRole('button', { name: /PNG 2x/i })
+    const menuBtn = screen.getByRole('button', { name: /Arquivo/i })
+    fireEvent.click(menuBtn)
+
+    const pngBtn = screen.getByRole('menuitem', { name: /PNG 2x/i })
     fireEvent.click(pngBtn)
 
     await waitFor(() => {
@@ -92,8 +95,16 @@ describe('BreadcrumbsBar (Barra Superior de Navegação, Tags, Histórico e Expo
     expect(useGraphStore.getState().theme).toBe('dark')
   })
 
-  it('deve renderizar botão de importar arquivo .tex', () => {
+  it('deve renderizar menu dropdown de arquivo com opções de importação e exportação', () => {
     render(<BreadcrumbsBar />)
-    expect(screen.getByText('Importar .tex')).toBeInTheDocument()
+    const menuBtn = screen.getByRole('button', { name: /Arquivo/i })
+    expect(menuBtn).toBeInTheDocument()
+
+    // Abre o dropdown
+    fireEvent.click(menuBtn)
+    expect(screen.getByRole('menuitem', { name: /Exportar PNG 2x/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /Exportar JSON/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /Importar \.tex/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /Importar JSON/i })).toBeInTheDocument()
   })
 })
