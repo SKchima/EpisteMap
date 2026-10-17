@@ -716,12 +716,12 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
               <Palette size={12} /> COR TEMÁTICA
             </label>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              {COLOR_PALETTE.map((c, idx) => {
+              {COLOR_PALETTE.map((c) => {
                 const isSelected = selectedNode.data.color === c.value
                 return (
                   <button
                     type="button"
-                    key={idx}
+                    key={c.value}
                     onClick={() => handleColorSelect(c.value)}
                     title={c.name}
                     style={{
@@ -1347,7 +1347,7 @@ function renderWithWikiLinks(
   return React.Children.map(children, (child) => {
     if (typeof child === 'string') {
       const parts = child.split(/(\[\[.*?\]\])/g)
-      return parts.map((part, i) => {
+      return parts.map((part) => {
         if (part.startsWith('[[') && part.endsWith(']]')) {
           const title = part.slice(2, -2).trim()
           if (!title) return part
@@ -1357,7 +1357,7 @@ function renderWithWikiLinks(
             return (
               <button
                 type="button"
-                key={i}
+                key={`link-${found.id}`}
                 onClick={() => navigateToNode(found.id)}
                 title={`Navegar para "${found.data.title}"`}
                 style={{
@@ -1380,7 +1380,7 @@ function renderWithWikiLinks(
           return (
             <button
               type="button"
-              key={i}
+              key={`unlinked-${title}`}
               onClick={() => createNodeFromWikiLink(sourceNodeId, title)}
               title={`Criar conceito "${title}" e conectar`}
               style={{

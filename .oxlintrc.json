@@ -1,8 +1,18 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "oxc"],
+  "ignorePatterns": ["dist", "TASKS_files"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "react/react-in-jsx-scope": "off",
+    "react/no-unstable-nested-components": ["error", { "allowAsProps": true }],
+    "react/iframe-missing-sandbox": "off",
+    "oxc/no-map-spread": "off"
   }
 }

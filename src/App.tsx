@@ -164,9 +164,10 @@ const EpistemapCanvas: React.FC = () => {
 
   // Ajusta visão da câmera ao alternar foco/drill-down
   useEffect(() => {
+    const isSubtree = Boolean(focusId)
     focusFitViewTimerRef.current = setTimeout(() => {
       focusFitViewTimerRef.current = null
-      fitView({ padding: 0.25, duration: 300 })
+      fitView({ padding: isSubtree ? 0.3 : 0.25, duration: 300 })
     }, 60)
     return () => {
       if (focusFitViewTimerRef.current) {

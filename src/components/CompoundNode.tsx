@@ -328,9 +328,9 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
               }}
             >
               {nodeData.tags &&
-                nodeData.tags.slice(0, 2).map((tag, idx) => (
+                nodeData.tags.slice(0, 2).map((tag) => (
                   <span
-                    key={idx}
+                    key={tag}
                     style={{
                       fontSize: '9px',
                       background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#242a3a',
