@@ -471,9 +471,23 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
   }
 
   const handleOpenExternalPdf = () => {
-    if (!selectedNode?.data.pdfAttachment?.base64) return
-    const blobUrl = base64ToPdfBlobUrl(selectedNode.data.pdfAttachment.base64)
-    const pageNum = selectedNode.data.pdfAttachment.page || 1
+    const att = selectedNode?.data.pdfAttachment
+    if (!att) return
+    const pageNum = att.page || 1
+    if (att.filePath) {
+      const filePath = att.filePath
+      fetch('/api/open-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath, page: pageNum }),
+      }).catch(() => {
+        const url = `/api/pdf?path=${encodeURIComponent(filePath)}`
+        window.open(`${url}#page=${pageNum}`, '_blank')
+      })
+      return
+    }
+    if (!att.base64) return
+    const blobUrl = base64ToPdfBlobUrl(att.base64)
     window.open(`${blobUrl}#page=${pageNum}`, '_blank')
   }
 

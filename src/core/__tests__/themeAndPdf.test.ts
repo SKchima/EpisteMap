@@ -126,7 +126,7 @@ describe('Theme and PDF Attachment Integration', () => {
       expect(updated?.data.pdfAttachment).toBeUndefined()
     })
 
-    it('sanitizeGraph preserva e normaliza anexos de PDF válidos', () => {
+    it('sanitizeGraph preserva e normaliza anexos de PDF válidos (incluindo filePath local)', () => {
       const rawGraph = {
         nodes: [
           {
@@ -137,6 +137,7 @@ describe('Theme and PDF Attachment Integration', () => {
                 name: '  paper.pdf  ',
                 base64: 'dados',
                 page: '15',
+                filePath: '  /home/user/compendio.pdf  ',
               },
             },
           },
@@ -159,6 +160,7 @@ describe('Theme and PDF Attachment Integration', () => {
         name: 'paper.pdf',
         base64: 'dados',
         page: 15,
+        filePath: '/home/user/compendio.pdf',
       })
       expect(clean.nodes[1].data.pdfAttachment).toEqual({
         name: 'documento.pdf',

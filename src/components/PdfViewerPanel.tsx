@@ -39,7 +39,8 @@ export const PdfViewerPanel: React.FC<PdfViewerPanelProps> = ({
   if (
     attachment.page !== prevAttachment.page ||
     attachment.name !== prevAttachment.name ||
-    attachment.base64 !== prevAttachment.base64
+    attachment.base64 !== prevAttachment.base64 ||
+    attachment.filePath !== prevAttachment.filePath
   ) {
     setPrevAttachment(attachment)
     setPage(attachment.page || 1)
@@ -47,9 +48,14 @@ export const PdfViewerPanel: React.FC<PdfViewerPanelProps> = ({
     setIsSavedRef(true)
   }
 
-  // Cria Blob URL a partir do base64 auto-contido com revogação limpa
+  // Cria Blob URL a partir do base64 auto-contido ou usa rota local /api/pdf para filePath
   const blobUrl = useMemo(() => {
-    if (!attachment.base64) return null
+    if (!attachment.base64) {
+      if (attachment.filePath) {
+        return `/api/pdf?path=${encodeURIComponent(attachment.filePath)}`
+      }
+      return null
+    }
     try {
       const raw = attachment.base64.includes(',')
         ? attachment.base64.split(',')[1]
@@ -72,7 +78,7 @@ export const PdfViewerPanel: React.FC<PdfViewerPanelProps> = ({
         ? attachment.base64
         : `data:application/pdf;base64,${attachment.base64}`
     }
-  }, [attachment.base64])
+  }, [attachment.base64, attachment.filePath])
 
   useEffect(() => {
     return () => {
@@ -121,6 +127,16 @@ export const PdfViewerPanel: React.FC<PdfViewerPanelProps> = ({
   }
 
   const handleOpenExternal = () => {
+    if (attachment.filePath) {
+      fetch('/api/open-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: attachment.filePath, page }),
+      }).catch(() => {
+        if (blobUrl) window.open(`${blobUrl}#page=${page}`, '_blank')
+      })
+      return
+    }
     if (!blobUrl) return
     window.open(`${blobUrl}#page=${page}`, '_blank')
   }

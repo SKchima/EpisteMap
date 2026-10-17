@@ -17,6 +17,8 @@ export type PdfAttachment = {
   name: string
   base64: string
   page: number
+  /** Caminho absoluto opcional no disco local (evita duplicar payload base64 para compêndios locais). */
+  filePath?: string
 }
 
 export type NodeData = {

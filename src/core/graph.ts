@@ -240,10 +240,15 @@ export function sanitizeGraph(raw: unknown): Graph {
       const rawName = typeof rawPdf.name === 'string' ? rawPdf.name.trim() : ''
       const rawBase64 = typeof rawPdf.base64 === 'string' ? rawPdf.base64 : ''
       const rawPage = Number(rawPdf.page)
+      const rawFilePath =
+        typeof rawPdf.filePath === 'string' && rawPdf.filePath.trim()
+          ? rawPdf.filePath.trim()
+          : undefined
       pdfAttachment = {
         name: rawName || 'documento.pdf',
         base64: rawBase64,
         page: Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1,
+        ...(rawFilePath ? { filePath: rawFilePath } : {}),
       }
     }
 

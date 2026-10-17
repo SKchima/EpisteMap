@@ -47,6 +47,7 @@ export function prepareGraphForExport(
           name: n.data.pdfAttachment.name,
           base64: '', // Removido para exportação leve (<50KB)
           page: n.data.pdfAttachment.page,
+          ...(n.data.pdfAttachment.filePath ? { filePath: n.data.pdfAttachment.filePath } : {}),
         },
       },
     }
