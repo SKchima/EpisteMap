@@ -1,9 +1,10 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { epistemapVaultPlugin } from './src/server/vaultPlugin.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), epistemapVaultPlugin()],
   build: {
     rolldownOptions: {
       output: {

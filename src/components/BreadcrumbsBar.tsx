@@ -24,6 +24,7 @@ import { useGraphStore } from '../core/graphStore'
 import { getBreadcrumbs } from '../core/graph'
 import { buildFlowElements, computeNodeBoundingBoxes } from '../core/layout'
 import { parseTexDocument } from '../core/texImporter'
+import { useVaultSync } from '../core/useVaultSync'
 
 export interface BreadcrumbsBarProps {
   onOpenSearch?: () => void
@@ -36,6 +37,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   onOpenSettings,
   onOpenShortcuts,
 }) => {
+  const { isConnected, isSyncing, vaultPath, forceReload } = useVaultSync()
   const focusId = useGraphStore((s) => s.focusId)
   const nodes = useGraphStore((s) => s.nodes)
   const edges = useGraphStore((s) => s.edges)
@@ -657,6 +659,38 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             >
               ?
             </kbd>
+          </button>
+        )}
+
+        {isConnected && (
+          <button
+            type="button"
+            onClick={forceReload}
+            title={`Vault local sincronizado: ${vaultPath || '~/notes/epistemap/vault.json'}\nClique para forçar recarga do disco`}
+            style={{
+              background: btnBg,
+              color: textColor,
+              border: btnBorder,
+              borderRadius: '5px',
+              padding: '5px 8px',
+              fontSize: '11px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: isSyncing ? '#eab308' : '#22c55e',
+                display: 'inline-block',
+                boxShadow: isSyncing ? '0 0 6px #eab308' : '0 0 6px #22c55e',
+              }}
+            />
+            <span style={{ fontWeight: 500 }}>{isSyncing ? 'Sync...' : 'Vault'}</span>
           </button>
         )}
 

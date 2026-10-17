@@ -103,12 +103,28 @@ epistemap dev     # Starts in development mode with HMR
 
 ---
 
+## Local Vault & CLI Automation
+
+EpisteMap synchronizes bidirectionally with a local file on disk (`~/notes/epistemap/vault.json`). Modifying the file triggers real-time updates in the application through Server-Sent Events (SSE).
+
+The included CLI utility enables inspection and modification via terminal or AI agents:
+
+```bash
+node bin/epistemap-cli.mjs status
+node bin/epistemap-cli.mjs list
+node bin/epistemap-cli.mjs add --title "Sobolev Spaces" --parent "Functional Analysis" --desc "Definition..."
+node bin/epistemap-cli.mjs connect --source "Sobolev Spaces" --target "Weak Derivatives" --label "generalizes"
+node bin/epistemap-cli.mjs get --title "Sobolev Spaces"
+```
+
+---
+
 ## Technical Specifications & Architecture
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8.3-646cff.svg)](https://vite.dev/)
-[![Vitest](https://img.shields.io/badge/Tests-129%20passed-brightgreen.svg)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-132%20passed-brightgreen.svg)](https://vitest.dev/)
 [![Oxlint](https://img.shields.io/badge/Linter-Oxlint%20(0%20warnings)-blueviolet.svg)](https://oxc.rs/)
 [![Local--First](https://img.shields.io/badge/Storage-Local--First-emerald.svg)]()
 
@@ -117,4 +133,5 @@ epistemap dev     # Starts in development mode with HMR
 - **Canvas & Graph Engine**: React Flow (`@xyflow/react`), Dagre hierarchical layout algorithm.
 - **Mathematics & Markup**: KaTeX (`remark-math`, `rehype-katex`), custom LaTeX AST parser.
 - **State & Temporal History**: Zustand with Zundo undo/redo middleware and input debounce coalescing.
-- **Linter & Test Suite**: Oxlint (0 warnings), Vitest (129 acceptance tests).
+- **Local Vault Sync**: Node `fs.watch` and Server-Sent Events (SSE) bridge.
+- **Linter & Test Suite**: Oxlint (0 warnings across 152 rules), Vitest (132 acceptance tests).

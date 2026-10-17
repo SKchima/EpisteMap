@@ -30,6 +30,13 @@ backups/
 *.backup.json
 epistemap-backup-*.json
 *.pdf
+notes/
+vault/
+personal/
+user-data/
+*.notes.json
+*.vault.json
+*.tex
 
 # Workspace AI Customizations & Skills (Locais e privadas)
 .agents/
