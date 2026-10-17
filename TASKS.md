@@ -80,6 +80,12 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - Execução via `epistemap dev` acionando servidor Vite em tempo real com Hot Module Reloading (HMR).
   - Ciclo de vida estrito com encerramento do servidor Node e liberação de porta ao fechar a janela do Chrome.
   - Subcomandos `install` e `uninstall` atualizados em [epistemap-launcher.sh](file:///home/kchima/repos/epistemap/bin/epistemap-launcher.sh) para sincronizar ambos os lançadores desktop e o link simbólico `~/.local/bin/epistemap`.
+- [x] **Fase 13 - Modo Estendido Padrão, Altura Dobrada & Sub-objetos Focados em Título**:
+  - Modo estendido com todos os sub-objetos visíveis lado a lado estabelecido como padrão invariante para qualquer distância de zoom (`layout.ts` e `lod.ts`).
+  - Altura base dos cartões de objetos dobrada de 112px para 224px (`LEAF_HEIGHT = 224`), gerando contêineres proporcionais e espaçosos de 300px.
+  - Sub-objetos no nível de zoom padrão exibem exclusivamente seus títulos e identificadores, omitindo conteúdos e descrições textuais ruidosas ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)).
+  - Conteúdos ricos e fórmulas KaTeX revelados ao aproximar com zoom in (nível micro >= 1.30) ou via Inspetor lateral.
+  - Suíte de 156 testes aprovada no Vitest e 0 warnings no Oxlint.
 
 ### [/] Em Andamento
 

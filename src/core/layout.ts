@@ -4,7 +4,7 @@ import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox, ChildNodeSumm
 import { getAncestorIds, getSubtreeIds, resolveColor, canReparent, isNodeInsideBoundingBox } from './graph'
 
 export const LEAF_WIDTH = 232
-export const LEAF_HEIGHT = 112
+export const LEAF_HEIGHT = 224
 export const HEADER_HEIGHT = 44
 export const PADDING = 16
 export const GAP = 16
@@ -13,7 +13,7 @@ export type NodeSize = { width: number; height: number }
 
 /**
  * Calcula a altura vertical de um nó folha baseado no seu conteúdo textual/matemático.
- * O texto expande naturalmente para baixo dentro de limites seguros.
+ * Base dobrada para 224px, expandindo naturalmente para baixo se houver equações densas.
  */
 export function calculateLeafHeight(node: KnowledgeNode): number {
   if (!node.data.description) return LEAF_HEIGHT
@@ -26,11 +26,11 @@ export function calculateLeafHeight(node: KnowledgeNode): number {
 
   let extra = 0
   if (hasDisplayMath) extra += 40
-  if (charCount > 80 || lineCount > 2) {
-    extra += Math.min(60, Math.floor(charCount / 50) * 16)
+  if (charCount > 120 || lineCount > 4) {
+    extra += Math.min(80, Math.floor(charCount / 50) * 16)
   }
 
-  return Math.min(240, Math.max(LEAF_HEIGHT, LEAF_HEIGHT + extra))
+  return Math.min(320, Math.max(LEAF_HEIGHT, LEAF_HEIGHT + extra))
 }
 
 /**
@@ -105,15 +105,12 @@ export function computeNodeSizes(
   nodes: KnowledgeNode[],
   edgesOrFocusId: KnowledgeEdge[] | string | null = null,
   focusIdOrMacro: string | null | boolean = null,
-  isMacroFlag: boolean = false
+  _isMacroFlag: boolean = false
 ): Map<string, NodeSize> {
   const edges: KnowledgeEdge[] = Array.isArray(edgesOrFocusId) ? edgesOrFocusId : []
   const focusId: string | null = Array.isArray(edgesOrFocusId)
     ? (focusIdOrMacro as string | null)
     : (edgesOrFocusId as string | null)
-  const isMacro: boolean = Array.isArray(edgesOrFocusId)
-    ? isMacroFlag
-    : Boolean(focusIdOrMacro)
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
   const sizeMap = new Map<string, NodeSize>()
@@ -128,9 +125,8 @@ export function computeNodeSizes(
     visited.add(nodeId)
 
     const rawChildren = nodes.filter((n) => n.parentId === nodeId)
-    const isNodeCollapsed = isMacro
-      ? (focusId !== null ? nodeId !== focusId : true)
-      : (nodeId === focusId ? false : Boolean(node.data.collapsed))
+    // Os nós só colapsam quando o usuário clicou explicitamente no chevron de recolhimento (collapsed: true)
+    const isNodeCollapsed = nodeId === focusId ? false : Boolean(node.data.collapsed)
 
     if (rawChildren.length === 0 || isNodeCollapsed) {
       const leaf = { width: LEAF_WIDTH, height: leafHeight }
@@ -180,19 +176,16 @@ export function buildFlowElements(
   options: BuildFlowOptions
 ): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
   const { focusId, selectedId, dropTargetId = null, activeTag = null, lodLevel = 'standard' } = options
-  const isMacro = lodLevel === 'macro'
-  const sizes = computeNodeSizes(nodes, edges, focusId, isMacro)
+  const sizes = computeNodeSizes(nodes, edges, focusId)
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
   // 1. Identificar nós visíveis
   let visibleNodes: KnowledgeNode[] = []
 
   if (focusId === null) {
-    // Modo geral: Raízes visíveis; filhos visíveis apenas se todos os ancestrais estiverem expandidos (!collapsed).
-    // No modo macro (zoom out panorâmico), sub-temas recolhem para dentro do cartão da matéria mãe.
+    // Modo geral: Raízes visíveis; filhos visíveis a qualquer distância, exceto se o pai estiver explicitamente recolhido.
     function isNodeVisible(n: KnowledgeNode): boolean {
       if (!n.parentId) return true
-      if (isMacro) return false
       let parent = nodeMap.get(n.parentId)
       while (parent) {
         if (parent.data.collapsed) return false
@@ -212,9 +205,7 @@ export function buildFlowElements(
         for (const n of nodes) {
           if (n.parentId && allowed.has(n.parentId) && !allowed.has(n.id)) {
             const parent = nodeMap.get(n.parentId)
-            // No modo macro durante drill-down, apenas os filhos diretos da raiz focada são renderizados
-            const isAllowedByMacro = !isMacro || parent?.id === focusId
-            if (isAllowedByMacro && parent && (parent.id === focusId || !parent.data.collapsed)) {
+            if (parent && (parent.id === focusId || !parent.data.collapsed)) {
               allowed.add(n.id)
               added = true
             }
@@ -260,7 +251,7 @@ export function buildFlowElements(
 
   for (const parent of orderedNodes) {
     const rawChildren = visibleNodes.filter((c) => c.parentId === parent.id)
-    const isParentCollapsed = parent.id === focusId ? false : (isMacro ? true : Boolean(parent.data.collapsed))
+    const isParentCollapsed = parent.id === focusId ? false : Boolean(parent.data.collapsed)
     if (rawChildren.length === 0 || isParentCollapsed) continue
 
     const children = orderChildrenHorizontal(rawChildren, edges)
@@ -277,7 +268,7 @@ export function buildFlowElements(
     const size = sizes.get(n.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
     const isDrillRoot = focusId !== null && n.id === focusId
     const isRoot = isDrillRoot || !n.parentId || !visibleIdSet.has(n.parentId)
-    const isNodeCollapsed = isDrillRoot ? false : (isMacro ? true : Boolean(n.data.collapsed))
+    const isNodeCollapsed = isDrillRoot ? false : Boolean(n.data.collapsed)
 
     let pos: Position = { x: 0, y: 0 }
     let parentIdProp: string | undefined = undefined

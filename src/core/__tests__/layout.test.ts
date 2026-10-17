@@ -27,8 +27,8 @@ describe('layout determinístico de contêineres', () => {
     ]
 
     const sizes = computeNodeSizes(nodes)
-    expect(sizes.get('a')).toEqual({ width: 232, height: 112 })
-    expect(sizes.get('b')).toEqual({ width: 232, height: 112 })
+    expect(sizes.get('a')).toEqual({ width: 232, height: 224 })
+    expect(sizes.get('b')).toEqual({ width: 232, height: 224 })
   })
 
   it('calcula dimensão de contêiner suficiente para envolver os filhos sem sobreposição', () => {
@@ -42,7 +42,7 @@ describe('layout determinístico de contêineres', () => {
     const pSize = sizes.get('parent')!
     const cSize = sizes.get('child1')!
 
-    expect(cSize).toEqual({ width: 232, height: 112 })
+    expect(cSize).toEqual({ width: 232, height: 224 })
     // O pai deve ter largura e altura maiores que os filhos
     expect(pSize.width).toBeGreaterThan(cSize.width)
     expect(pSize.height).toBeGreaterThan(cSize.height)
@@ -227,7 +227,7 @@ describe('distribuição espacial e auto-layout Dagre', () => {
     expect(p2.y).toBe(p3.y)
   })
 
-  it('no modo macro, recolhe nós filhos para dentro da matéria raiz evitando sobreposição', () => {
+  it('mantém objetos estendidos com sub-objetos visíveis por padrão em qualquer distância', () => {
     const nodes = [
       makeNode('materia_algebra', null, { title: 'Álgebra Abstrata', collapsed: false }),
       makeNode('capitulo_grupos', 'materia_algebra', { title: 'Teoria de Grupos' }),
@@ -240,16 +240,13 @@ describe('distribuição espacial e auto-layout Dagre', () => {
       lodLevel: 'macro',
     })
 
-    // No modo macro, apenas a matéria raiz é emitida na tela
-    expect(flowNodes.map((n) => n.id)).toEqual(['materia_algebra'])
+    // Sub-objetos permanecem visíveis em qualquer distância
+    expect(flowNodes.map((n) => n.id)).toEqual(['materia_algebra', 'capitulo_grupos', 'capitulo_aneis'])
 
-    const rootFlow = flowNodes[0]
-    expect(rootFlow.width).toBe(232)
-    expect(rootFlow.height).toBe(112)
-    expect(rootFlow.data.isContainer).toBe(false)
-    expect(rootFlow.data.collapsed).toBe(true)
+    const rootFlow = flowNodes.find((n) => n.id === 'materia_algebra')!
+    expect(rootFlow.data.isContainer).toBe(true)
+    expect(rootFlow.data.collapsed).toBe(false)
     expect(rootFlow.data.childCount).toBe(2)
-    expect(rootFlow.data.childrenSummary).toHaveLength(2)
   })
 
   it('organiza sub-nós (definições e teoremas) lado a lado na mesma linha horizontal (LR)', () => {

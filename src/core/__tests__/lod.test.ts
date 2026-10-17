@@ -3,13 +3,9 @@ import { getZoomLodLevel, renderMathText, LOD_THRESHOLDS } from '../lod'
 
 describe('Zoom Level of Detail (LoD) Engine', () => {
   describe('getZoomLodLevel', () => {
-    it('deve classificar zoom < 0.65 como macro', () => {
-      expect(getZoomLodLevel(0.1)).toBe('macro')
-      expect(getZoomLodLevel(0.3)).toBe('macro')
-      expect(getZoomLodLevel(0.649)).toBe('macro')
-    })
-
-    it('deve classificar 0.65 <= zoom < 1.30 como standard', () => {
+    it('deve classificar zoom < 1.30 como standard por padrão para qualquer distância', () => {
+      expect(getZoomLodLevel(0.1)).toBe('standard')
+      expect(getZoomLodLevel(0.3)).toBe('standard')
       expect(getZoomLodLevel(0.65)).toBe('standard')
       expect(getZoomLodLevel(1.0)).toBe('standard')
       expect(getZoomLodLevel(1.299)).toBe('standard')
@@ -21,11 +17,11 @@ describe('Zoom Level of Detail (LoD) Engine', () => {
       expect(getZoomLodLevel(4.0)).toBe('micro')
     })
 
-    it('deve lidar com casos de borda e valores anômalos com fallback seguro para macro', () => {
-      expect(getZoomLodLevel(NaN)).toBe('macro')
-      expect(getZoomLodLevel(-1)).toBe('macro')
+    it('deve lidar com casos de borda e valores anômalos com fallback seguro para standard', () => {
+      expect(getZoomLodLevel(NaN)).toBe('standard')
+      expect(getZoomLodLevel(-1)).toBe('standard')
       // @ts-expect-error testando entrada não numérica
-      expect(getZoomLodLevel(null)).toBe('macro')
+      expect(getZoomLodLevel(null)).toBe('standard')
     })
 
     it('deve expor constantes estritas de limiares', () => {

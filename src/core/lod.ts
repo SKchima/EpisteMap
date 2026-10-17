@@ -8,13 +8,11 @@ export const LOD_THRESHOLDS = {
 
 /**
  * Determina o nível de detalhe semântico (LoD) baseado na escala atual de zoom da câmera.
- * Invariante: zoom < 0.65 -> macro, 0.65 <= zoom < 1.30 -> standard, zoom >= 1.30 -> micro.
+ * O modo estendido com sub-objetos visíveis é o padrão para qualquer distância (zoom < 1.30 -> standard).
+ * Ao aproximar com zoom in (zoom >= 1.30), ativa o modo micro para visualização de fórmulas e conteúdos.
  */
 export function getZoomLodLevel(zoom: number): ZoomLodLevel {
-  if (typeof zoom !== 'number' || isNaN(zoom) || zoom < LOD_THRESHOLDS.MACRO_MAX) {
-    return 'macro'
-  }
-  if (zoom >= LOD_THRESHOLDS.MICRO_MIN) {
+  if (typeof zoom === 'number' && zoom >= LOD_THRESHOLDS.MICRO_MIN) {
     return 'micro'
   }
   return 'standard'

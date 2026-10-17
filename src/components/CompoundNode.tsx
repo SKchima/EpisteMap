@@ -22,14 +22,6 @@ type CompoundNodeData = {
   lodLevel?: ZoomLodLevel
 }
 
-function formatCompactDescription(text: string): string {
-  if (!text || typeof text !== 'string') return ''
-  return text
-    .replace(/\$\$(.*?)\$\$/gs, '∑ $1')
-    .replace(/\$(.*?)\$/g, '$1')
-    .replace(/\[\[(.*?)\]\]/g, '↗ $1')
-}
-
 export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
   const nodeData = data as unknown as CompoundNodeData
   const addSubNode = useGraphStore((s) => s.addSubNode)
@@ -112,107 +104,7 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
       : '1px solid #282f42'
 
   // ==========================================
-  // RENDERIZAÇÃO: MODO MACRO (Zoom < 0.65)
-  // Visão minimalista, limpa de pássaro (zero ruído)
-  // ==========================================
-  if (lodLevel === 'macro') {
-    return (
-      <div
-        className={`compound-node-inner ${selected ? 'epistemap-node-selected' : ''}`}
-        onClick={(e) => {
-          e.stopPropagation()
-          select(id)
-        }}
-        onDoubleClick={(e) => {
-          e.stopPropagation()
-          if (childCount > 0) setFocus(id)
-        }}
-        style={{
-          width: '100%',
-          height: '100%',
-          boxSizing: 'border-box',
-          backgroundColor: cardBg,
-          border: cardBorder,
-          borderRadius: '8px',
-          color: cardTextColor,
-          padding: isContainer ? '10px 14px' : '8px 12px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: isContainer ? 'flex-start' : 'center',
-          alignItems: isContainer ? 'flex-start' : 'center',
-          textAlign: isContainer ? 'left' : 'center',
-          cursor: 'pointer',
-          opacity: isDimmed ? 0.32 : 1,
-          position: 'relative',
-        }}
-      >
-        <Handle
-          type="target"
-          position={Position.Left}
-          className="epistemap-handle"
-          style={{ background: handleColor, width: 8, height: 8 }}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            maxWidth: '100%',
-            justifyContent: isContainer ? 'flex-start' : 'center',
-            width: isContainer ? '100%' : 'auto',
-          }}
-        >
-          <span
-            style={{
-              width: 9,
-              height: 9,
-              borderRadius: '50%',
-              backgroundColor: accentColor,
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: '13px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              color: cardTitleColor,
-            }}
-          >
-            {nodeData.title || 'Sem título'}
-          </span>
-          {childCount > 0 && (
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                backgroundColor: isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#232838',
-                color: isHighContrast ? '#ffffff' : isLight ? '#334155' : '#cbd5e1',
-                borderRadius: '4px',
-                padding: '1px 5px',
-                flexShrink: 0,
-              }}
-            >
-              {childCount}
-            </span>
-          )}
-        </div>
-
-        <Handle
-          type="source"
-          position={Position.Right}
-          className="epistemap-handle"
-          style={{ background: handleColor, width: 8, height: 8 }}
-        />
-      </div>
-    )
-  }
-
-  // ==========================================
-  // RENDERIZAÇÃO: MODO STANDARD & MICRO
+  // RENDERIZAÇÃO DO NÓ (PADRÃO PARA QUALQUER DISTÂNCIA)
   // ==========================================
   const isMicro = lodLevel === 'micro'
 
@@ -294,12 +186,12 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '8px',
-          height: '28px',
+          minHeight: '28px',
           borderBottom: isContainer ? cardBorderBottom : 'none',
           paddingBottom: isContainer ? '6px' : '0',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', flex: 1 }}>
           <span
             style={{
               width: 8,
@@ -310,18 +202,23 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
             }}
           />
           {isContainer ? (
-            <FolderTree size={13} color={isHighContrast ? '#000000' : isLight ? '#64748b' : '#94a3b8'} />
+            <FolderTree size={13} color={isHighContrast ? '#000000' : isLight ? '#64748b' : '#94a3b8'} style={{ flexShrink: 0 }} />
           ) : (
-            <FileText size={13} color={isHighContrast ? '#000000' : isLight ? '#64748b' : '#94a3b8'} />
+            <FileText size={13} color={isHighContrast ? '#000000' : isLight ? '#64748b' : '#94a3b8'} style={{ flexShrink: 0 }} />
           )}
           <span
             style={{
               fontWeight: 600,
-              fontSize: isContainer ? '13px' : '12px',
-              whiteSpace: 'nowrap',
+              fontSize: isContainer ? '13px' : '13px',
+              whiteSpace: isContainer ? 'nowrap' : 'normal',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               color: cardTitleColor,
+              lineHeight: 1.35,
+              wordBreak: 'break-word',
+              display: '-webkit-box',
+              WebkitLineClamp: isContainer ? 1 : 3,
+              WebkitBoxOrient: 'vertical',
             }}
           >
             {nodeData.title || 'Sem título'}
@@ -397,110 +294,109 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
 
       {/* Conteúdo específico para nós folha ou recolhidos */}
       {!isContainer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
-          {/* Caso MICRO em contêiner recolhido: Revela lista de seções e definições internas */}
-          {isMicro && isCollapsed && childCount > 0 ? (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '3px',
-                overflowY: 'auto',
-                maxHeight: '38px',
-                paddingRight: '2px',
-              }}
-            >
-              {childrenSummary.map((child) => (
-                <div
-                  key={child.id}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    select(child.id)
-                  }}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation()
-                    setFocus(child.id)
-                  }}
-                  title={`Sub-conceito: ${child.title} (Clique para selecionar, duplo clique para focar)`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    fontSize: '11px',
-                    padding: '2px 5px',
-                    borderRadius: '3px',
-                    background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '5px',
-                      height: '5px',
-                      borderRadius: '50%',
-                      backgroundColor: child.color || accentColor,
-                      flexShrink: 0,
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            justifyContent: 'space-between',
+            gap: '8px',
+            marginTop: '8px',
+          }}
+        >
+          {/* Caso de contêiner colapsado com filhos */}
+          {isCollapsed && childCount > 0 ? (
+            isMicro ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '3px',
+                  overflowY: 'auto',
+                  maxHeight: '120px',
+                  paddingRight: '2px',
+                }}
+              >
+                {childrenSummary.map((child) => (
+                  <div
+                    key={child.id}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      select(child.id)
                     }}
-                  />
-                  <span
+                    onDoubleClick={(e) => {
+                      e.stopPropagation()
+                      setFocus(child.id)
+                    }}
+                    title={`Sub-conceito: ${child.title} (Clique para selecionar, duplo clique para focar)`}
                     style={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      color: cardTitleColor,
-                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      padding: '2px 5px',
+                      borderRadius: '3px',
+                      background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                      cursor: 'pointer',
                     }}
                   >
-                    {child.title}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : nodeData.description ? (
-            /* Caso MICRO em nó folha: renderização de fórmulas matemáticas KaTeX inline */
-            isMicro ? (
+                    <span
+                      style={{
+                        width: '5px',
+                        height: '5px',
+                        borderRadius: '50%',
+                        backgroundColor: child.color || accentColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        color: cardTitleColor,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {child.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null
+          ) : isMicro ? (
+            /* Caso MICRO em nó folha: renderização rica de fórmulas matemáticas KaTeX e texto */
+            nodeData.description ? (
               <div
                 style={{
                   fontSize: '11px',
                   color: cardDescColor,
-                  lineHeight: 1.35,
+                  lineHeight: 1.4,
                   flex: 1,
-                  maxHeight: '120px',
+                  maxHeight: '135px',
                   overflowY: 'auto',
                   paddingRight: '2px',
                 }}
                 dangerouslySetInnerHTML={{ __html: renderMathText(nodeData.description) }}
               />
             ) : (
-              /* Caso STANDARD: visual resumido com expansão natural para baixo */
               <div
                 style={{
-                  fontSize: '11px',
-                  color: cardDescColor,
-                  lineHeight: 1.35,
-                  flex: 1,
-                  maxHeight: '80px',
-                  overflowY: 'auto',
-                  paddingRight: '2px',
+                  fontSize: '10px',
+                  color: isHighContrast ? '#444' : isLight ? '#94a3b8' : '#64748b',
+                  fontStyle: 'italic',
                 }}
               >
-                {formatCompactDescription(nodeData.description)}
+                Clique para descrever
               </div>
             )
           ) : (
-            <div
-              style={{
-                fontSize: '10px',
-                color: isHighContrast ? '#444' : isLight ? '#94a3b8' : '#64748b',
-                fontStyle: 'italic',
-              }}
-            >
-              Clique para descrever
-            </div>
+            /* Caso PADRÃO (qualquer distância): exibe apenas o título do sub-objeto, sem conteúdos textuais */
+            <div style={{ flex: 1 }} />
           )}
 
           {/* Tags e botão de adicionar sub-objeto */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
             <div
               style={{
                 display: 'flex',

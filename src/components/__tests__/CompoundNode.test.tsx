@@ -16,7 +16,7 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
     })
   })
 
-  it('deve renderizar nó no nível MACRO com visual minimalista (título em destaque, sem descrição ou botões ruidosos)', () => {
+  it('deve renderizar nó no nível padrão com visual limpo (título em destaque, tags e botão de sub-nó, sem conteúdo textual ruidoso)', () => {
     const nodeProps = {
       id: 'node-1',
       data: {
@@ -28,8 +28,8 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
         childCount: 0,
         isContainer: false,
         width: 232,
-        height: 112,
-        lodLevel: 'macro' as const,
+        height: 224,
+        lodLevel: 'standard' as const,
       },
       selected: false,
       zIndex: 1,
@@ -49,15 +49,16 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
       </ReactFlowProvider>
     )
 
-    // Título presente
+    // Título, tags e ações presentes
     expect(screen.getByText('Álgebra Linear')).toBeInTheDocument()
+    expect(screen.getByText('#algebra')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sub/i })).toBeInTheDocument()
 
-    // No modo macro, descrição e botões de adicionar sub-nó são omitidos para evitar ruído ilegível
-    expect(screen.queryByText('Estudo de espaços vetoriais')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /sub/i })).not.toBeInTheDocument()
+    // Conteúdo textual omitido para evitar poluição visual em qualquer distância
+    expect(screen.queryByText('Estudo de espaços vetoriais e transformações lineares')).not.toBeInTheDocument()
   })
 
-  it('deve renderizar nó no nível STANDARD com tags, descrição resumida e botão de adicionar sub-nó', () => {
+  it('deve renderizar nó no nível STANDARD exibindo apenas título dos sub-objetos e não seus conteúdos', () => {
     const nodeProps = {
       id: 'node-2',
       data: {
@@ -69,7 +70,7 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
         childCount: 0,
         isContainer: false,
         width: 232,
-        height: 112,
+        height: 224,
         lodLevel: 'standard' as const,
       },
       selected: false,
@@ -91,9 +92,11 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
     )
 
     expect(screen.getByText('Topologia Geral')).toBeInTheDocument()
-    expect(screen.getByText('Espaços topológicos e continuidade')).toBeInTheDocument()
     expect(screen.getByText('#topologia')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sub/i })).toBeInTheDocument()
+
+    // O conteúdo descritivo não aparece nesse nível de zoom
+    expect(screen.queryByText('Espaços topológicos e continuidade')).not.toBeInTheDocument()
   })
 
   it('deve renderizar nó folha no nível MICRO exibindo equações KaTeX ricas diretamente no cartão', () => {
