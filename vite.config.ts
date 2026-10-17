@@ -1,11 +1,8 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
-const isGitHubPages = process.env.GITHUB_PAGES === 'true'
-
 // https://vite.dev/config/
 export default defineConfig({
-  base: isGitHubPages ? '/EpisteMap/' : '/',
   plugins: [react()],
   build: {
     rolldownOptions: {

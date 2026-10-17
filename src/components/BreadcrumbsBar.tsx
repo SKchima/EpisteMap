@@ -249,7 +249,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '8px' }}>
           <img
-            src={`${import.meta.env.BASE_URL}favicon.svg`}
+            src="/favicon.svg"
             alt="EpisteMap Logo"
             style={{
               width: '20px',
