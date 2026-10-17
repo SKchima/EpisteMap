@@ -60,7 +60,7 @@ EpisteMap is designed for studying and organizing dense academic subjects. It al
 ## Installation
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22+
 - npm
 
 ### Clone and Install
