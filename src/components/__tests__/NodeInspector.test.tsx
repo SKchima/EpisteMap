@@ -142,4 +142,30 @@ describe('NodeInspector (Inspetor de Conhecimento)', () => {
     fireEvent.click(wikiBtn)
     expect(useGraphStore.getState().selectedId).toBe(targetId)
   })
+
+  it('deve renderizar handle de redimensionamento e permitir redimensionar por teclado e duplo clique', () => {
+    localStorage.clear()
+    render(<NodeInspector />)
+
+    const resizer = screen.getByRole('separator', { name: /Redimensionar painel lateral/i })
+    expect(resizer).toBeInTheDocument()
+    expect(resizer).toHaveAttribute('aria-valuenow', '380')
+
+    // Pressionar ArrowLeft aumenta a largura em 20px
+    fireEvent.keyDown(resizer, { key: 'ArrowLeft' })
+    expect(resizer).toHaveAttribute('aria-valuenow', '400')
+    expect(localStorage.getItem('epistemap:inspector-width')).toBe('400')
+
+    // Pressionar ArrowRight diminui a largura em 20px
+    fireEvent.keyDown(resizer, { key: 'ArrowRight' })
+    expect(resizer).toHaveAttribute('aria-valuenow', '380')
+    expect(localStorage.getItem('epistemap:inspector-width')).toBe('380')
+
+    // Duplo clique restaura a largura padrão
+    fireEvent.keyDown(resizer, { key: 'ArrowLeft' })
+    fireEvent.keyDown(resizer, { key: 'ArrowLeft' })
+    expect(resizer).toHaveAttribute('aria-valuenow', '420')
+    fireEvent.doubleClick(resizer)
+    expect(resizer).toHaveAttribute('aria-valuenow', '380')
+  })
 })

@@ -248,3 +248,28 @@ code {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
+
+/* Sidebar Resizer Handle */
+.epistemap-sidebar-resizer {
+  transition: background-color 0.15s ease;
+}
+
+.epistemap-sidebar-resizer:hover,
+.epistemap-sidebar-resizer:focus-visible,
+.epistemap-sidebar-resizer.is-active {
+  background-color: #818cf8 !important;
+  outline: none;
+}
+
+:root[data-theme="light"] .epistemap-sidebar-resizer:hover,
+:root[data-theme="light"] .epistemap-sidebar-resizer:focus-visible,
+:root[data-theme="light"] .epistemap-sidebar-resizer.is-active {
+  background-color: #6366f1 !important;
+}
+
+:root[data-theme="high-contrast"] .epistemap-sidebar-resizer:hover,
+:root[data-theme="high-contrast"] .epistemap-sidebar-resizer:focus-visible,
+:root[data-theme="high-contrast"] .epistemap-sidebar-resizer.is-active {
+  background-color: #000000 !important;
+}
+

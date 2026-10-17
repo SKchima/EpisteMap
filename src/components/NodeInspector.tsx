@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Markdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
@@ -109,6 +109,124 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
 
   const selectedNode = nodes.find((n) => n.id === selectedId)
   const selectedEdge = !selectedNode ? edges.find((e) => e.id === selectedId) : undefined
+  const isViewingPdf = activeInspectorView === 'pdf' && Boolean(selectedNode?.data?.pdfAttachment)
+
+  const STORAGE_KEY_WIDTH = 'epistemap:inspector-width'
+  const DEFAULT_WIDTH = 380
+  const MIN_WIDTH = 280
+
+  const [width, setWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_WIDTH)
+      if (saved) {
+        const parsed = Number(saved)
+        if (Number.isFinite(parsed) && parsed >= MIN_WIDTH) {
+          return parsed
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return DEFAULT_WIDTH
+  })
+
+  const [isResizing, setIsResizing] = useState(false)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_WIDTH, String(width))
+    } catch {
+      // ignore
+    }
+  }, [width])
+
+  const effectiveWidth = isViewingPdf ? Math.max(width, 520) : width
+
+  const handleResetWidth = () => {
+    const defaultW = isViewingPdf ? 540 : DEFAULT_WIDTH
+    setWidth(defaultW)
+  }
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+
+    const startX = e.clientX
+    const startW = effectiveWidth
+
+    const handlePointerMove = (moveEvent: MouseEvent | PointerEvent) => {
+      // Como o painel está posicionado à direita da tela, mover para a esquerda aumenta a largura
+      const deltaX = startX - moveEvent.clientX
+      const maxW = Math.max(320, typeof window !== 'undefined' ? Math.floor(window.innerWidth * 0.75) : 850)
+      const nextW = Math.min(maxW, Math.max(MIN_WIDTH, Math.round(startW + deltaX)))
+      setWidth(nextW)
+    }
+
+    const handlePointerUp = () => {
+      setIsResizing(false)
+      window.removeEventListener('pointermove', handlePointerMove as EventListener)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+      if (typeof document !== 'undefined') {
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+    }
+
+    if (typeof document !== 'undefined') {
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    window.addEventListener('pointermove', handlePointerMove as EventListener)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
+  }
+
+  const handleResizerKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      setWidth((w) => {
+        const maxW = Math.max(320, typeof window !== 'undefined' ? Math.floor(window.innerWidth * 0.75) : 850)
+        return Math.min(maxW, w + 20)
+      })
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      setWidth((w) => Math.max(MIN_WIDTH, w - 20))
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      handleResetWidth()
+    }
+  }
+
+  const resizerHandle = (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Redimensionar painel lateral"
+      aria-valuenow={effectiveWidth}
+      aria-valuemin={MIN_WIDTH}
+      aria-valuemax={Math.max(320, typeof window !== 'undefined' ? Math.floor(window.innerWidth * 0.75) : 850)}
+      tabIndex={0}
+      onPointerDown={handlePointerDown}
+      onDoubleClick={handleResetWidth}
+      onKeyDown={handleResizerKeyDown}
+      className={`epistemap-sidebar-resizer ${isResizing ? 'is-active' : ''}`}
+      title="Arraste para redimensionar (Duplo clique para restaurar largura padrão)"
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: '-4px',
+        width: '8px',
+        cursor: 'col-resize',
+        zIndex: 50,
+        backgroundColor: isResizing
+          ? (isHighContrast ? '#000000' : '#818cf8')
+          : 'transparent',
+      }}
+    />
+  )
 
   // Caso uma aresta esteja selecionada, exibe o Inspetor de Relação Semântica
   if (selectedEdge) {
@@ -118,7 +236,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
     return (
       <aside
         style={{
-          width: '360px',
+          width: `${effectiveWidth}px`,
+          position: 'relative',
           background: asideBg,
           borderLeft: asideBorder,
           color: textColor,
@@ -126,8 +245,12 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
           flexDirection: 'column',
           height: 'calc(100vh - 52px)',
           overflowY: 'auto',
+          userSelect: isResizing ? 'none' : 'auto',
+          transition: isResizing ? 'none' : 'width 0.15s ease',
+          flexShrink: 0,
         }}
       >
+        {resizerHandle}
         <div
           style={{
             padding: '14px 16px',
@@ -288,7 +411,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
     return (
       <aside
         style={{
-          width: '340px',
+          width: `${effectiveWidth}px`,
+          position: 'relative',
           background: asideBg,
           borderLeft: asideBorder,
           padding: '20px',
@@ -297,8 +421,12 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          userSelect: isResizing ? 'none' : 'auto',
+          transition: isResizing ? 'none' : 'width 0.15s ease',
+          flexShrink: 0,
         }}
       >
+        {resizerHandle}
         <div>
           <h3
             style={{
@@ -491,12 +619,11 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
     window.open(`${blobUrl}#page=${pageNum}`, '_blank')
   }
 
-  const isViewingPdf = activeInspectorView === 'pdf' && Boolean(selectedNode.data.pdfAttachment)
-
   return (
     <aside
       style={{
-        width: isViewingPdf ? '540px' : '380px',
+        width: `${effectiveWidth}px`,
+        position: 'relative',
         background: asideBg,
         borderLeft: asideBorder,
         color: textColor,
@@ -504,9 +631,12 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
         flexDirection: 'column',
         height: 'calc(100vh - 52px)',
         overflowY: isViewingPdf ? 'hidden' : 'auto',
-        transition: 'width 0.2s ease',
+        userSelect: isResizing ? 'none' : 'auto',
+        transition: isResizing ? 'none' : 'width 0.15s ease',
+        flexShrink: 0,
       }}
     >
+      {resizerHandle}
       {/* Topo do Inspetor */}
       <div
         style={{
