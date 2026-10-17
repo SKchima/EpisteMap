@@ -101,6 +101,10 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
     - **Inspetor Lateral**: Ocultados inputs mutáveis (input de título, seletor de nó pai, paleta de cores, input de tags, aba/área de edição Markdown, dropzone de anexo PDF e botões de exclusão de nó/aresta). Título exibido em tipografia heading `h2`, tags como badges estáticas `#tag`, nó pai como link de navegação, preview Markdown e KaTeX renderizado diretamente, leitor PDF limpo, e WikiLinks não mapeados como texto elegante inerte `[[Nome]]`.
     - **Atalhos de Teclado**: `Cmd+E` / `Ctrl+E` alterna instantaneamente entre modos. No modo visualização, atalhos de mutação (`Tab`, `Enter`, `Delete`, `Backspace`, `Cmd+Z`, `Cmd+Y`) são desativados. Atalho documentado em `SettingsModal.tsx`.
   - Suíte de 160 testes aprovada no Vitest (14 arquivos) e 0 erros no Oxlint.
+- [x] **Fase 16 - Remoção do Indicador de Página nos Objetos do Mapa**:
+  - Removido o badge de página (`p.X` / clipe) dos cartões de nós no canvas ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)), garantindo que a tipografia do título permaneça limpa, espaçosa e sem ruído visual no grafo.
+  - Informações de anexo, número de página de referência e leitor embutido mantidos de forma rica e organizada no painel do Inspetor ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)).
+  - Teste de regressão adicionado em [CompoundNode.test.tsx](file:///home/kchima/repos/epistemap/src/components/__tests__/CompoundNode.test.tsx) (161 testes aprovados no total).
 
 ### [/] Em Andamento
 

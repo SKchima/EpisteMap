@@ -184,4 +184,48 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
     fireEvent.click(childDef)
     expect(useGraphStore.getState().selectedId).toBe('child-1')
   })
+
+  it('não deve renderizar indicador de página (p.X) no nó do mapa mesmo se houver pdfAttachment acoplado', () => {
+    const nodeProps = {
+      id: 'node-pdf',
+      data: {
+        title: 'Teorema de Shannon',
+        description: 'Capacidade de canal com ruído.',
+        tags: ['informacao'],
+        collapsed: false,
+        color: '#6366f1',
+        childCount: 0,
+        isContainer: false,
+        width: 232,
+        height: 224,
+        lodLevel: 'standard' as const,
+        pdfAttachment: {
+          name: 'shannon1948.pdf',
+          base64: '',
+          page: 14,
+        },
+      },
+      selected: false,
+      zIndex: 1,
+      isConnectable: true,
+      positionAbsoluteX: 0,
+      positionAbsoluteY: 0,
+      dragging: false,
+      deletable: true,
+      selectable: true,
+      draggable: true,
+      type: 'compound',
+    }
+
+    render(
+      <ReactFlowProvider>
+        <CompoundNode {...nodeProps} />
+      </ReactFlowProvider>
+    )
+
+    expect(screen.getByText('Teorema de Shannon')).toBeInTheDocument()
+    // Indicador numérico de página não deve poluir visualmente o cabeçalho do nó no mapa
+    expect(screen.queryByText(/p\.14/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/p\.1/i)).not.toBeInTheDocument()
+  })
 })

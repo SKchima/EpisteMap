@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from 'react'
 import { Handle, Position, useStore, type NodeProps } from '@xyflow/react'
-import { ChevronDown, ChevronRight, Plus, Eye, FolderTree, FileText, Paperclip } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Eye, FolderTree, FileText } from 'lucide-react'
 import { useGraphStore } from '../core/graphStore'
 import { getZoomLodLevel, renderMathText } from '../core/lod'
 import type { PdfAttachment, ZoomLodLevel, ChildNodeSummary } from '../core/types'
@@ -227,28 +227,6 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
           >
             {nodeData.title || 'Sem título'}
           </span>
-
-          {/* Badge Indicador de PDF acoplado */}
-          {nodeData.pdfAttachment && (
-            <span
-              title={`PDF acoplado: ${nodeData.pdfAttachment.name} (pág. ${nodeData.pdfAttachment.page || 1})`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-                fontSize: '9px',
-                backgroundColor: isHighContrast ? '#000000' : '#4f46e5',
-                color: '#ffffff',
-                borderRadius: '3px',
-                padding: '1px 4px',
-                fontWeight: 600,
-                flexShrink: 0,
-              }}
-            >
-              <Paperclip size={9} />
-              <span>p.{nodeData.pdfAttachment.page || 1}</span>
-            </span>
-          )}
         </div>
 
         {/* Controles de Cabeçalho */}
