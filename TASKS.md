@@ -133,3 +133,4 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
 - [ ] **Minimapa Flutuante Translúcido (Overview Radar)**: Radar recolhível no canto inferior para navegação ágil em mapas extensos.
 - [ ] **Filtro de Destaque no Canvas por Tag / Tipo**: Nós fora do filtro ativo recebem opacidade reduzida (15%), isolando visualmente subconjuntos de conceitos (ex: apenas `#teorema`).
 - [ ] **Guias Magnéticas de Alinhamento (Smart Guides / Snap)**: Alinhamento automático e guias inteligentes durante o arrasto manual de conceitos raiz.
+- [ ] **Remoção Completa do Indicador de Páginas no Mapa e no Inspetor**: Auditar e eliminar definitivamente todos os resquícios do indicador de página de anexos PDF (como badges `p.X`, referências de página e contadores no mapa e no cabeçalho do Inspetor), mantendo o controle de páginas restrito e focado exclusivamente ao interior do leitor de PDF embutido.
