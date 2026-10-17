@@ -188,12 +188,20 @@ export function epistemapVaultPlugin(options: VaultPluginOptions = {}): Plugin {
             }
 
             const pageNum = Math.max(1, Math.floor(Number(data.page) || 1))
+
+            // Em ambiente de teste automatizado (Vitest/CI), não dispara processos GUI externos na tela do usuário
+            if (process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)) {
+              res.statusCode = 200
+              res.end(JSON.stringify({ ok: true, filePath: safePdfPath, page: pageNum, testMock: true }))
+              return
+            }
+
             const child = spawn('zathura', [`--page=${pageNum}`, safePdfPath], {
               detached: true,
               stdio: 'ignore',
             })
             child.on('error', () => {
-              // Ignora se zathura não estiver instalado no ambiente de teste
+              // Ignora se zathura não estiver instalado no ambiente
             })
             child.unref()
 
