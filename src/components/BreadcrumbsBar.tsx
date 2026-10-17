@@ -250,7 +250,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '8px' }}>
           <img
             src="/favicon.svg"
-            alt="Epistemap Logo"
+            alt="EpisteMap Logo"
             style={{
               width: '20px',
               height: '20px',
@@ -259,7 +259,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             }}
           />
           <span style={{ fontWeight: 700, fontSize: '15px', color: '#818cf8', letterSpacing: '-0.3px' }}>
-            Epistemap
+            EpisteMap
           </span>
           <span
             style={{

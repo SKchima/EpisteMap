@@ -853,7 +853,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                   <ShieldCheck size={16} color="#10b981" /> Auditoria de Segurança & Local-First
                 </h3>
                 <p style={{ fontSize: '12px', color: subtextColor, margin: '0 0 16px 0', lineHeight: 1.5 }}>
-                  O Epistemap foi projetado com a filosofia estrita de <strong>Zero Cloud &amp; Zero Tracking</strong>.
+                  O EpisteMap foi projetado com a filosofia estrita de <strong>Zero Cloud &amp; Zero Tracking</strong>.
                 </p>
 
                 <div style={{ background: cardBg, border: borderRule, borderRadius: isPaper ? '0' : '8px', padding: '14px', marginBottom: '16px' }}>

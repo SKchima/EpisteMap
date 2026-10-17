@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Epistemap Desktop Launcher for Rofi, Hyprland & Desktop Environments
+# EpisteMap Desktop Launcher for Rofi, Hyprland & Desktop Environments
 # Garante ciclo de vida 1-a-1 entre janela do aplicativo e servidor local.
 
 set -e
@@ -45,7 +45,7 @@ ensure_build() {
     fi
 
     if [ "${needs_build}" -eq 1 ]; then
-        echo "Compilando pacote de produção otimizado do Epistemap..."
+        echo "Compilando pacote de produção otimizado do EpisteMap..."
         npm run build > "${STATE_DIR}/build.log" 2>&1 || {
             echo "Erro na compilação do pacote. Verifique ${STATE_DIR}/build.log."
             return 1
@@ -58,7 +58,7 @@ start_server() {
     cd "${REPO_DIR}"
 
     if is_server_running; then
-        echo "Epistemap server já está em execução em ${URL}."
+        echo "EpisteMap server já está em execução em ${URL}."
         return 0
     fi
 
@@ -83,7 +83,7 @@ start_server() {
         server_cmd=("${node_bin}" "${vite_bin}" --port "${PORT}" --host "${HOST}" --strictPort)
     else
         ensure_build
-        echo "Iniciando servidor de produção Epistemap..."
+        echo "Iniciando servidor de produção EpisteMap..."
         server_cmd=("${node_bin}" "${vite_bin}" preview --port "${PORT}" --host "${HOST}" --strictPort)
     fi
 
@@ -111,11 +111,11 @@ start_server() {
             exit 1
         fi
     done
-    echo "Servidor Epistemap ativo em ${URL}."
+    echo "Servidor EpisteMap ativo em ${URL}."
 }
 
 stop_server() {
-    echo "Encerrando servidor Epistemap..."
+    echo "Encerrando servidor EpisteMap..."
     if [ -f "${PID_FILE}" ]; then
         local pid
         pid=$(cat "${PID_FILE}" 2>/dev/null || true)
@@ -135,19 +135,19 @@ stop_server() {
 
     # Garante liberação absoluta da porta
     fuser -k "${PORT}/tcp" 2>/dev/null || true
-    # Encerra processos residuais do perfil Chrome do Epistemap
+    # Encerra processos residuais do perfil Chrome do EpisteMap
     pkill -f "${CHROME_PROFILE}" 2>/dev/null || true
-    echo "Servidor Epistemap parado."
+    echo "Servidor EpisteMap parado."
 }
 
 status_server() {
     if is_server_running; then
-        echo "Epistemap rodando em ${URL}."
+        echo "EpisteMap rodando em ${URL}."
         if [ -f "${PID_FILE}" ]; then
             echo "PID: $(cat "${PID_FILE}")"
         fi
     else
-        echo "Epistemap não está rodando."
+        echo "EpisteMap não está rodando."
     fi
 }
 
@@ -184,7 +184,7 @@ run_app() {
     # Caso a aplicação já esteja rodando com janela aberta, traz para o foco e sai
     # sem disparar cleanup nem matar o servidor da instância ativa
     if is_server_running && has_running_chrome; then
-        echo "Epistemap já está em execução. Trazendo janela existente para primeiro plano..."
+        echo "EpisteMap já está em execução. Trazendo janela existente para primeiro plano..."
         if [ -x "${CHROME_BIN}" ]; then
             "${CHROME_BIN}" "${chrome_args[@]}" "$@" >/dev/null 2>&1 &
         fi
@@ -199,7 +199,7 @@ run_app() {
     # Inicia o servidor
     start_server "${mode}"
 
-    echo "Abrindo Epistemap..."
+    echo "Abrindo EpisteMap..."
     local client_pid=""
 
     cleanup() {
@@ -237,7 +237,7 @@ install_desktop() {
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Epistemap
+Name=EpisteMap
 GenericName=Knowledge Graph & Concept Mapper
 Comment=Mapeamento e Modelagem de Conhecimento Científico
 Exec=${bin_dir}/epistemap
@@ -261,7 +261,7 @@ EOF
     if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database "${app_dir}" 2>/dev/null || true
     fi
-    echo "✓ Epistemap agora está disponível no seu Rofi / lançador de aplicativos!"
+    echo "✓ EpisteMap agora está disponível no seu Rofi / lançador de aplicativos!"
 }
 
 case "${1:-}" in

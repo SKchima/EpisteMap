@@ -1,4 +1,4 @@
-# Epistemap
+# EpisteMap
 
 Local-first concept mapping and knowledge graph tool with native LaTeX support.
 
@@ -14,7 +14,7 @@ Local-first concept mapping and knowledge graph tool with native LaTeX support.
 
 ## Overview
 
-Epistemap is an infinite canvas application for structuring academic notes, mathematical concepts, and course summaries into hierarchical graphs. It stores all data locally in the browser and runs without external network dependencies.
+EpisteMap is an infinite canvas application for structuring academic notes, mathematical concepts, and course summaries into hierarchical graphs. It stores all data locally in the browser and runs without external network dependencies.
 
 ---
 
@@ -101,7 +101,7 @@ Builds assets into `dist/`.
 
 ## Linux Desktop Launcher
 
-A shell script runs Epistemap as a standalone Chrome window and terminates the background server when the window closes:
+A shell script runs EpisteMap as a standalone Chrome window and terminates the background server when the window closes:
 
 ```bash
 chmod +x bin/epistemap-launcher.sh

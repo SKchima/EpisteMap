@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Epistemap ErrorBoundary capturou um erro:', error, errorInfo)
+    console.error('EpisteMap ErrorBoundary capturou um erro:', error, errorInfo)
   }
 
   private handleReload = () => {
@@ -86,7 +86,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#f8fafc' }}>
-                  Ocorreu um erro no Epistemap
+                  Ocorreu um erro no EpisteMap
                 </h2>
                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#94a3b8' }}>
                   A interface encontrou uma inconsistência durante a renderização.

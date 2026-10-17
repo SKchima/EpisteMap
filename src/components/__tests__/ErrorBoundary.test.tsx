@@ -39,7 +39,7 @@ describe('ErrorBoundary', () => {
     )
 
     expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.getByText('Ocorreu um erro no Epistemap')).toBeInTheDocument()
+    expect(screen.getByText('Ocorreu um erro no EpisteMap')).toBeInTheDocument()
     expect(screen.getByText(/Falha simulada no componente filho/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Recarregar/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Restaurar Mapa Inicial/i })).toBeInTheDocument()

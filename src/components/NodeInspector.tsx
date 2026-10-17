@@ -374,7 +374,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
         </div>
 
         <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center' }}>
-          Epistemap • Modelagem de Conhecimento
+          EpisteMap • Modelagem de Conhecimento
         </div>
       </aside>
     )
