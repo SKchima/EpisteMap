@@ -95,11 +95,19 @@ chmod +x bin/epistemap-launcher.sh
 
 Commands:
 ```bash
-epistemap         # Starts server and opens app window
-epistemap status  # Shows server PID and port
-epistemap stop    # Stops background server
-epistemap dev     # Starts in development mode with HMR
+epistemap            # Starts production preview server and opens app window
+epistemap dev        # Starts in development mode with live HMR
+epistemap status     # Shows server PID and port
+epistemap stop       # Stops background server
+epistemap uninstall  # Removes desktop shortcuts and CLI symlink
 ```
+
+### Application Launcher & Rofi Integration
+
+Running `./bin/epistemap-launcher.sh install` automatically installs two desktop entries in `~/.local/share/applications/`:
+
+- **`EpisteMap`**: Launches the compiled production preview application.
+- **`EpisteMap (Dev)`**: Launches Vite in development mode with live Hot Module Reloading (HMR) for real-time development tracking. Closing the window cleanly terminates the development server.
 
 ---
 

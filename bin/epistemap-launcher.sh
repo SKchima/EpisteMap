@@ -258,15 +258,54 @@ Exec=${bin_dir}/epistemap dev
 EOF
     chmod +x "${app_dir}/epistemap.desktop"
     echo "✓ Instalado lançador desktop em ${app_dir}/epistemap.desktop"
+
+    cat <<EOF > "${app_dir}/epistemap-dev.desktop"
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=EpisteMap (Dev)
+GenericName=Knowledge Graph & Concept Mapper (Modo Desenvolvimento)
+Comment=EpisteMap em Modo Desenvolvimento com Hot Module Reloading (HMR)
+Exec=${bin_dir}/epistemap dev
+Icon=${REPO_DIR}/public/icon.png
+Terminal=false
+Categories=Development;Education;Science;
+StartupWMClass=chrome-127.0.0.1__-Default
+Keywords=knowledge;graph;dev;vite;hmr;concept;map;mindmap;math;science;latex;epistemology;
+Actions=StopServer;
+
+[Desktop Action StopServer]
+Name=Parar Servidor de Fundo
+Exec=${bin_dir}/epistemap stop
+EOF
+    chmod +x "${app_dir}/epistemap-dev.desktop"
+    echo "✓ Instalado lançador desktop de desenvolvimento em ${app_dir}/epistemap-dev.desktop"
+
     if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database "${app_dir}" 2>/dev/null || true
     fi
-    echo "✓ EpisteMap agora está disponível no seu Rofi / lançador de aplicativos!"
+    echo "✓ EpisteMap e EpisteMap (Dev) agora estão disponíveis no seu Rofi / lançador de aplicativos!"
+}
+
+uninstall_desktop() {
+    local bin_dir="${HOME}/.local/bin"
+    local app_dir="${HOME}/.local/share/applications"
+    rm -f "${bin_dir}/epistemap"
+    rm -f "${app_dir}/epistemap.desktop"
+    rm -f "${app_dir}/epistemap-dev.desktop"
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "${app_dir}" 2>/dev/null || true
+    fi
+    echo "✓ EpisteMap e EpisteMap (Dev) desinstalados com sucesso de ${bin_dir} e ${app_dir}."
 }
 
 case "${1:-}" in
     install)
         install_desktop
+        exit 0
+        ;;
+    uninstall)
+        uninstall_desktop
         exit 0
         ;;
     stop)

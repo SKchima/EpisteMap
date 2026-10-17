@@ -75,6 +75,11 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - Handles de conexão restritos à entrada esquerda (`Position.Left`) e saída direita (`Position.Right`) em [CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx) para fluxo contínuo em esteira de conhecimento.
   - Distribuição horizontal de raízes desconexas no Dagre (`applyDagreLayout`).
   - Cobertura com 157 testes automatizados aprovados no Vitest.
+- [x] **Fase 12 - Atalho Rofi & Lançador Desktop para Desenvolvimento (HMR)**:
+  - Entrada de desktop dedicada `epistemap-dev.desktop` instalada em `~/.local/share/applications/` com nome `EpisteMap (Dev)`.
+  - Execução via `epistemap dev` acionando servidor Vite em tempo real com Hot Module Reloading (HMR).
+  - Ciclo de vida estrito com encerramento do servidor Node e liberação de porta ao fechar a janela do Chrome.
+  - Subcomandos `install` e `uninstall` atualizados em [epistemap-launcher.sh](file:///home/kchima/repos/epistemap/bin/epistemap-launcher.sh) para sincronizar ambos os lançadores desktop e o link simbólico `~/.local/bin/epistemap`.
 
 ### [/] Em Andamento
 
