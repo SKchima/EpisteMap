@@ -6,6 +6,7 @@ import { epistemapVaultPlugin } from './src/server/vaultPlugin.ts'
 export default defineConfig({
   plugins: [react(), epistemapVaultPlugin()],
   build: {
+    chunkSizeWarningLimit: 600,
     rolldownOptions: {
       output: {
         manualChunks(id) {

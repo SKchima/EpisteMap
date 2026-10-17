@@ -537,6 +537,8 @@ const EpistemapCanvas: React.FC = () => {
             zoomOnDoubleClick={false}
             deleteKeyCode={null}
             fitView
+            minZoom={0.15}
+            maxZoom={4.0}
             fitViewOptions={{ padding: focusId ? 0.3 : 0.25 }}
             colorMode={theme === 'dark' ? 'dark' : 'light'}
             style={{ backgroundColor: canvasBg }}

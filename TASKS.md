@@ -58,6 +58,14 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - **Documentação & Open Source**: [README.md](file:///home/kchima/repos/epistemap/README.md) completo com instruções de instalação, badges, guia do lançador desktop Rofi, atalhos e licença [LICENSE](file:///home/kchima/repos/epistemap/LICENSE) MIT.
   - **Proteção de Privacidade**: [.gitignore](file:///home/kchima/repos/epistemap/.gitignore) estrito bloqueando arquivos de backup, PDFs e logs para manter o repositório 100% neutro.
 
+- [x] **Fase 10 - Zoom Semântico por Nível de Detalhe (Level of Detail - LoD)**:
+  - Transições discretas e livres de layout shifts baseadas na escala de zoom da câmera (`macro` < 0.65, `standard` 0.65–1.30, `micro` >= 1.30) via seletor Zustand do React Flow em [lod.ts](file:///home/kchima/repos/epistemap/src/core/lod.ts).
+  - Nível `macro`: visual minimalista panorâmico sem poluição de textos de 2px, destacando títulos e contadores numéricos.
+  - Nível `standard`: visual balanceado com tags, botões de ação e resumo em texto.
+  - Nível `micro`: renderização rica de fórmulas matemáticas KaTeX em nós folha e revelação de lista interna interativa de seções e definições em contêineres recolhidos ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)).
+  - Expansão da amplitude de zoom no React Flow (`minZoom: 0.15`, `maxZoom: 4.0`).
+  - Cobertura com 15 novos testes unitários e de integração ([lod.test.ts](file:///home/kchima/repos/epistemap/src/core/__tests__/lod.test.ts) e [CompoundNode.test.tsx](file:///home/kchima/repos/epistemap/src/components/__tests__/CompoundNode.test.tsx)).
+
 ### [/] Em Andamento
 
 - _(Nenhuma tarefa pendente no momento)_

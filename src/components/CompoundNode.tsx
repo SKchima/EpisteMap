@@ -1,8 +1,9 @@
-import React, { memo } from 'react'
-import { Handle, Position, type NodeProps } from '@xyflow/react'
+import React, { memo, useCallback } from 'react'
+import { Handle, Position, useStore, type NodeProps } from '@xyflow/react'
 import { ChevronDown, ChevronRight, Plus, Eye, FolderTree, FileText, Paperclip } from 'lucide-react'
 import { useGraphStore } from '../core/graphStore'
-import type { PdfAttachment } from '../core/types'
+import { getZoomLodLevel, renderMathText } from '../core/lod'
+import type { PdfAttachment, ZoomLodLevel, ChildNodeSummary } from '../core/types'
 
 type CompoundNodeData = {
   title: string
@@ -12,11 +13,13 @@ type CompoundNodeData = {
   color: string | null
   childCount: number
   isContainer: boolean
+  childrenSummary?: ChildNodeSummary[]
   isDropTarget?: boolean
   isDimmed?: boolean
   pdfAttachment?: PdfAttachment | null
   width: number
   height: number
+  lodLevel?: ZoomLodLevel
 }
 
 function formatCompactDescription(text: string): string {
@@ -35,6 +38,12 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
   const select = useGraphStore((s) => s.select)
   const theme = useGraphStore((s) => s.theme)
 
+  // Subscrição estritamente discreta ao nível de zoom da câmera via selector Zustand do React Flow
+  const storeLod = useStore(
+    useCallback((s: { transform: [number, number, number] }) => getZoomLodLevel(s.transform[2]), [])
+  )
+  const lodLevel: ZoomLodLevel = nodeData.lodLevel ?? storeLod
+
   const isHighContrast = theme === 'high-contrast'
   const isLight = theme === 'light'
 
@@ -45,6 +54,7 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
   const isDimmed = Boolean(nodeData.isDimmed)
   const accentColor = isHighContrast ? '#000000' : nodeData.color || '#6366f1'
   const handleColor = isHighContrast ? '#000000' : accentColor
+  const childrenSummary = nodeData.childrenSummary || []
 
   const handleAddSubNode = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -100,6 +110,114 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
     : isLight
       ? '1px solid #e2e8f0'
       : '1px solid #282f42'
+
+  // ==========================================
+  // RENDERIZAÇÃO: MODO MACRO (Zoom < 0.65)
+  // Visão minimalista, limpa de pássaro (zero ruído)
+  // ==========================================
+  if (lodLevel === 'macro') {
+    return (
+      <div
+        className={`compound-node-inner ${selected ? 'epistemap-node-selected' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          select(id)
+        }}
+        onDoubleClick={(e) => {
+          e.stopPropagation()
+          if (childCount > 0) setFocus(id)
+        }}
+        style={{
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+          backgroundColor: cardBg,
+          border: cardBorder,
+          borderRadius: '8px',
+          color: cardTextColor,
+          padding: '8px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          cursor: 'pointer',
+          opacity: isDimmed ? 0.32 : 1,
+          position: 'relative',
+        }}
+      >
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="epistemap-handle"
+          style={{ background: handleColor, width: 8, height: 8 }}
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="epistemap-handle"
+          style={{ background: handleColor, width: 8, height: 8 }}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '100%' }}>
+          <span
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: '50%',
+              backgroundColor: accentColor,
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: '13px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: cardTitleColor,
+            }}
+          >
+            {nodeData.title || 'Sem título'}
+          </span>
+          {childCount > 0 && (
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                backgroundColor: isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#232838',
+                color: isHighContrast ? '#ffffff' : isLight ? '#334155' : '#cbd5e1',
+                borderRadius: '4px',
+                padding: '1px 5px',
+                flexShrink: 0,
+              }}
+            >
+              {childCount}
+            </span>
+          )}
+        </div>
+
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="epistemap-handle"
+          style={{ background: handleColor, width: 8, height: 8 }}
+        />
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="epistemap-handle"
+          style={{ background: handleColor, width: 8, height: 8 }}
+        />
+      </div>
+    )
+  }
+
+  // ==========================================
+  // RENDERIZAÇÃO: MODO STANDARD & MICRO
+  // ==========================================
+  const isMicro = lodLevel === 'micro'
 
   return (
     <div
@@ -164,7 +282,7 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
         </div>
       )}
 
-      {/* Handles para conexões direcionais (invisíveis por padrão, visíveis no selecionado ou conectando) */}
+      {/* Handles para conexões direcionais */}
       <Handle
         type="target"
         position={Position.Top}
@@ -289,22 +407,96 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
       {/* Conteúdo específico para nós folha ou recolhidos */}
       {!isContainer && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
-          {nodeData.description ? (
+          {/* Caso MICRO em contêiner recolhido: Revela lista de seções e definições internas */}
+          {isMicro && isCollapsed && childCount > 0 ? (
             <div
               style={{
-                fontSize: '11px',
-                color: cardDescColor,
-                lineHeight: 1.35,
-                maxHeight: '32px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3px',
+                overflowY: 'auto',
+                maxHeight: '38px',
+                paddingRight: '2px',
               }}
             >
-              {formatCompactDescription(nodeData.description)}
+              {childrenSummary.map((child) => (
+                <div
+                  key={child.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    select(child.id)
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    setFocus(child.id)
+                  }}
+                  title={`Sub-conceito: ${child.title} (Clique para selecionar, duplo clique para focar)`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '11px',
+                    padding: '2px 5px',
+                    borderRadius: '3px',
+                    background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      backgroundColor: child.color || accentColor,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      color: cardTitleColor,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {child.title}
+                  </span>
+                </div>
+              ))}
             </div>
+          ) : nodeData.description ? (
+            /* Caso MICRO em nó folha: renderização de fórmulas matemáticas KaTeX inline */
+            isMicro ? (
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: cardDescColor,
+                  lineHeight: 1.35,
+                  maxHeight: '32px',
+                  overflowY: 'auto',
+                  paddingRight: '2px',
+                }}
+                dangerouslySetInnerHTML={{ __html: renderMathText(nodeData.description) }}
+              />
+            ) : (
+              /* Caso STANDARD: visual resumido truncado */
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: cardDescColor,
+                  lineHeight: 1.35,
+                  maxHeight: '32px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
+                {formatCompactDescription(nodeData.description)}
+              </div>
+            )
           ) : (
             <div
               style={{
@@ -317,7 +509,7 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
             </div>
           )}
 
-          {/* Tags */}
+          {/* Tags e botão de adicionar sub-objeto */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div
               style={{

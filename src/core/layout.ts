@@ -1,6 +1,6 @@
 import dagre from '@dagrejs/dagre'
 import { MarkerType, type Node as RFNode, type Edge as RFEdge } from '@xyflow/react'
-import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox } from './types'
+import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox, ChildNodeSummary } from './types'
 import { getAncestorIds, getSubtreeIds, resolveColor, canReparent, isNodeInsideBoundingBox } from './graph'
 
 export const LEAF_WIDTH = 232
@@ -219,7 +219,13 @@ export function buildFlowElements(
       parentIdProp = n.parentId!
     }
 
-    const childrenCount = nodes.filter((c) => c.parentId === n.id).length
+    const directChildren = nodes.filter((c) => c.parentId === n.id)
+    const childrenCount = directChildren.length
+    const childrenSummary: ChildNodeSummary[] = directChildren.map((c) => ({
+      id: c.id,
+      title: c.data.title,
+      color: resolveColor(nodes, c.id),
+    }))
     const color = resolveColor(nodes, n.id)
 
     let isDimmed = false
@@ -250,6 +256,7 @@ export function buildFlowElements(
         collapsed: isNodeCollapsed,
         color,
         childCount: childrenCount,
+        childrenSummary,
         isContainer: childrenCount > 0 && !isNodeCollapsed,
         isDropTarget: dropTargetId === n.id,
         isDimmed,

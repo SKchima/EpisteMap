@@ -13,6 +13,14 @@ export type BoundingBox = {
 
 export type ThemeMode = 'dark' | 'light' | 'high-contrast'
 
+export type ZoomLodLevel = 'macro' | 'standard' | 'micro'
+
+export type ChildNodeSummary = {
+  id: string
+  title: string
+  color: string | null
+}
+
 export type PdfAttachment = {
   name: string
   base64: string

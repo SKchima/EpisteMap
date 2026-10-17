@@ -273,3 +273,36 @@ code {
   background-color: #000000 !important;
 }
 
+/* Zoom Semântico por Nível de Detalhe (LoD) */
+.epistemap-inline-math .katex {
+  font-size: 1.05em;
+}
+
+.epistemap-block-math .katex-display {
+  margin: 3px 0 !important;
+  font-size: 1.05em;
+}
+
+:root[data-theme="high-contrast"] .epistemap-inline-math,
+:root[data-theme="high-contrast"] .epistemap-block-math {
+  color: #000000 !important;
+}
+
+:root[data-theme="light"] .epistemap-inline-math,
+:root[data-theme="light"] .epistemap-block-math {
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .epistemap-inline-math,
+:root[data-theme="dark"] .epistemap-block-math {
+  color: #f8fafc;
+}
+
+.epistemap-lod-wikilink {
+  transition: opacity 0.15s ease;
+}
+
+.epistemap-lod-wikilink:hover {
+  opacity: 0.8;
+}
+
