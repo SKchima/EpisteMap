@@ -79,6 +79,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
   const setPdfPage = useGraphStore((s) => s.setPdfPage)
   const isInspectorOpen = useGraphStore((s) => s.isInspectorOpen)
   const toggleInspector = useGraphStore((s) => s.toggleInspector)
+  const editorMode = useGraphStore((s) => s.editorMode)
+  const isViewMode = editorMode === 'view'
 
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview')
   const [activeInspectorView, setActiveInspectorView] = useState<'details' | 'pdf'>('details')
@@ -489,49 +491,64 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
             >
               RÓTULO DA RELAÇÃO
             </label>
-            <input
-              id="edge-label-input"
-              type="text"
-              value={selectedEdge.label}
-              onChange={(e) => updateEdgeLabel(selectedEdge.id, e.target.value)}
-              placeholder="ex: fundamenta, generaliza, implica..."
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                background: inputBg,
-                border: inputBorder,
-                color: textColor,
-                borderRadius: '5px',
-                padding: '8px 10px',
-                fontSize: '13px',
-                outline: 'none',
-              }}
-            />
+            {!isViewMode ? (
+              <input
+                id="edge-label-input"
+                type="text"
+                value={selectedEdge.label}
+                onChange={(e) => updateEdgeLabel(selectedEdge.id, e.target.value)}
+                placeholder="ex: fundamenta, generaliza, implica..."
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: inputBg,
+                  border: inputBorder,
+                  color: textColor,
+                  borderRadius: '5px',
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  outline: 'none',
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  fontSize: '13px',
+                  color: textColor,
+                  fontWeight: 500,
+                  padding: '4px 0',
+                }}
+              >
+                {selectedEdge.label || '(Sem rótulo)'}
+              </div>
+            )}
           </div>
 
-          <div style={{ paddingTop: '8px', borderTop: asideBorder }}>
-            <button
-              type="button"
-              onClick={() => removeEdge(selectedEdge.id)}
-              style={{
-                width: '100%',
-                background: isHighContrast ? '#ffffff' : '#2f1f24',
-                border: isHighContrast ? '2px solid #000000' : '1px solid #5a2e38',
-                color: isHighContrast ? '#000000' : '#f87171',
-                borderRadius: '5px',
-                padding: '8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontWeight: 500,
-              }}
-            >
-              <Trash2 size={14} /> Excluir Relação
-            </button>
-          </div>
+          {!isViewMode && (
+            <div style={{ paddingTop: '8px', borderTop: asideBorder }}>
+              <button
+                type="button"
+                onClick={() => removeEdge(selectedEdge.id)}
+                style={{
+                  width: '100%',
+                  background: isHighContrast ? '#ffffff' : '#2f1f24',
+                  border: isHighContrast ? '2px solid #000000' : '1px solid #5a2e38',
+                  color: isHighContrast ? '#000000' : '#f87171',
+                  borderRadius: '5px',
+                  padding: '8px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  fontWeight: 500,
+                }}
+              >
+                <Trash2 size={14} /> Excluir Relação
+              </button>
+            </div>
+          )}
         </div>
       </aside>
     )
@@ -937,375 +954,458 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
         </div>
       ) : (
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Título */}
+          {/* Título do Conceito */}
           <div>
-            <label
-              htmlFor="node-title-input"
-              style={{
-                display: 'block',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: textMuted,
-                marginBottom: '6px',
-              }}
-            >
-              TÍTULO DO CONCEITO
-            </label>
-            <input
-              id="node-title-input"
-              type="text"
-              value={selectedNode.data.title}
-              onChange={handleTitleChange}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                background: inputBg,
-                border: inputBorder,
-                color: textColor,
-                borderRadius: '5px',
-                padding: '8px 10px',
-                fontSize: '14px',
-                fontWeight: 500,
-                outline: 'none',
-              }}
-            />
+            {!isViewMode ? (
+              <>
+                <label
+                  htmlFor="node-title-input"
+                  style={{
+                    display: 'block',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: textMuted,
+                    marginBottom: '6px',
+                  }}
+                >
+                  TÍTULO DO CONCEITO
+                </label>
+                <input
+                  id="node-title-input"
+                  type="text"
+                  value={selectedNode.data.title}
+                  onChange={handleTitleChange}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: inputBg,
+                    border: inputBorder,
+                    color: textColor,
+                    borderRadius: '5px',
+                    padding: '8px 10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    outline: 'none',
+                  }}
+                />
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: isHighContrast
+                      ? '#000000'
+                      : selectedNode.data.color || '#6366f1',
+                    flexShrink: 0,
+                  }}
+                />
+                <h2
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: textColor,
+                    margin: 0,
+                    lineHeight: 1.3,
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {selectedNode.data.title || 'Sem título'}
+                </h2>
+              </div>
+            )}
           </div>
 
           {/* Seletor de Nó Pai (Reparenting Alternativo) */}
-          <div>
-            <label
-              htmlFor="parent-node-select"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: textMuted,
-                marginBottom: '6px',
-              }}
-            >
-              <GitBranch size={12} /> HIERARQUIA (NÓ PAI)
-            </label>
-            <select
-              id="parent-node-select"
-              aria-label="Nó Pai"
-              value={selectedNode.parentId || ''}
-              onChange={handleParentChange}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                background: inputBg,
-                border: inputBorder,
-                color: textColor,
-                borderRadius: '5px',
-                padding: '7px 10px',
-                fontSize: '12px',
-                outline: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="" style={{ background: inputBg, color: textColor }}>
-                — Conceito Raiz (Sem pai) —
-              </option>
-              {validParents.map((p) => (
-                <option key={p.id} value={p.id} style={{ background: inputBg, color: textColor }}>
-                  {p.data.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Seletor de Cores */}
-          <div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: textMuted,
-                marginBottom: '6px',
-              }}
-            >
-              <Palette size={12} /> COR TEMÁTICA
-            </label>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              {COLOR_PALETTE.map((c) => {
-                const isSelected = selectedNode.data.color === c.value
-                return (
-                  <button
-                    type="button"
-                    key={c.value}
-                    onClick={() => handleColorSelect(c.value)}
-                    title={c.name}
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '4px',
-                      border: isSelected
-                        ? isHighContrast
-                          ? '2px solid #000'
-                          : '2px solid #fff'
-                        : isHighContrast
-                          ? '1px solid #000'
-                          : '1px solid #333d52',
-                      backgroundColor: c.value || (isHighContrast ? '#ffffff' : '#334155'),
-                      cursor: 'pointer',
-                      boxShadow: isSelected ? '0 0 6px rgba(255,255,255,0.6)' : 'none',
-                    }}
-                  />
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Tags sem cascata de useEffect */}
-          <div>
-            <label
-              htmlFor="node-tags-input"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: textMuted,
-                marginBottom: '6px',
-              }}
-            >
-              <Tag size={12} /> TAGS (SEPARADAS POR VÍRGULA)
-            </label>
-            <input
-              id="node-tags-input"
-              type="text"
-              value={tagInput}
-              onChange={(e) =>
-                setEditingTag({ nodeId: selectedNode.id, value: e.target.value })
-              }
-              onBlur={handleTagBlur}
-              onKeyDown={handleTagKeyDown}
-              placeholder="ex: álgebra, cálculo, fundamentos"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                background: inputBg,
-                border: inputBorder,
-                color: textColor,
-                borderRadius: '5px',
-                padding: '6px 10px',
-                fontSize: '12px',
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          {/* Documento PDF Acoplado */}
-          <div
-            style={{
-              background: sectionBg,
-              borderRadius: '6px',
-              padding: '12px',
-              border: sectionBorder,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: selectedNode.data.pdfAttachment ? '10px' : '0',
-              }}
-            >
-              <span
+          {!isViewMode ? (
+            <div>
+              <label
+                htmlFor="parent-node-select"
                 style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   fontSize: '11px',
                   fontWeight: 600,
                   color: textMuted,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.4px',
+                  marginBottom: '6px',
                 }}
               >
-                <Paperclip size={12} /> DOCUMENTO PDF ACOPLADO
-              </span>
-
-              {selectedNode.data.pdfAttachment && (
-                <button
-                  type="button"
-                  onClick={() => setActiveInspectorView('pdf')}
-                  style={{
-                    background: isHighContrast ? '#000000' : '#4f46e5',
-                    border: isHighContrast ? '2px solid #000000' : 'none',
-                    borderRadius: '4px',
-                    color: '#ffffff',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <Eye size={11} /> Ver PDF
-                </button>
-              )}
+                <GitBranch size={12} /> HIERARQUIA (NÓ PAI)
+              </label>
+              <select
+                id="parent-node-select"
+                aria-label="Nó Pai"
+                value={selectedNode.parentId || ''}
+                onChange={handleParentChange}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: inputBg,
+                  border: inputBorder,
+                  color: textColor,
+                  borderRadius: '5px',
+                  padding: '7px 10px',
+                  fontSize: '12px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="" style={{ background: inputBg, color: textColor }}>
+                  — Conceito Raiz (Sem pai) —
+                </option>
+                {validParents.map((p) => (
+                  <option key={p.id} value={p.id} style={{ background: inputBg, color: textColor }}>
+                    {p.data.title}
+                  </option>
+                ))}
+              </select>
             </div>
+          ) : selectedNode.parentId ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+              <GitBranch size={13} color={textMuted} />
+              <span style={{ color: textMuted }}>Parte de:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const parent = nodes.find((n) => n.id === selectedNode.parentId)
+                  if (parent) handleNavigate(parent.id)
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: isHighContrast ? '#000000' : '#38bdf8',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                  textDecoration: 'underline',
+                  fontSize: '12px',
+                }}
+              >
+                {nodes.find((n) => n.id === selectedNode.parentId)?.data.title || 'Conceito Pai'}
+              </button>
+            </div>
+          ) : null}
 
-            {!selectedNode.data.pdfAttachment ? (
-              <div style={{ marginTop: '8px' }}>
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    background: inputBg,
-                    border: isHighContrast ? '2px dashed #000000' : isLight ? '1.5px dashed #cbd5e1' : '1.5px dashed #3b4259',
-                    borderRadius: '5px',
-                    padding: '10px',
-                    color: textMuted,
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                  }}
-                >
-                  <Plus size={13} />
-                  <span>Anexar Arquivo PDF (.pdf)</span>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleAttachPdfFile}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: inputBg,
-                    border: inputBorder,
-                    borderRadius: '4px',
-                    padding: '6px 10px',
-                    fontSize: '12px',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                    <FileText size={13} color={isHighContrast ? '#000000' : '#818cf8'} />
-                    <span
+          {/* Seletor de Cores (apenas em modo de edição) */}
+          {!isViewMode && (
+            <div>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: textMuted,
+                  marginBottom: '6px',
+                }}
+              >
+                <Palette size={12} /> COR TEMÁTICA
+              </label>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                {COLOR_PALETTE.map((c) => {
+                  const isSelected = selectedNode.data.color === c.value
+                  return (
+                    <button
+                      type="button"
+                      key={c.value}
+                      onClick={() => handleColorSelect(c.value)}
+                      title={c.name}
                       style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: '180px',
-                        color: textColor,
-                        fontWeight: 500,
-                      }}
-                      title={selectedNode.data.pdfAttachment.name}
-                    >
-                      {selectedNode.data.pdfAttachment.name}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <label style={{ fontSize: '11px', color: textMuted }}>Pág:</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={selectedNode.data.pdfAttachment.page || 1}
-                      onChange={(e) => {
-                        const val = Math.max(1, parseInt(e.target.value, 10) || 1)
-                        setPdfPage(selectedNode.id, val)
-                      }}
-                      aria-label="Página de referência do PDF"
-                      style={{
-                        width: '40px',
-                        background: inputBg,
-                        border: inputBorder,
-                        color: textColor,
-                        borderRadius: '3px',
-                        padding: '2px 4px',
-                        fontSize: '11px',
-                        textAlign: 'center',
-                        outline: 'none',
+                        width: 22,
+                        height: 22,
+                        borderRadius: '4px',
+                        border: isSelected
+                          ? isHighContrast
+                            ? '2px solid #000'
+                            : '2px solid #fff'
+                          : isHighContrast
+                            ? '1px solid #000'
+                            : '1px solid #333d52',
+                        backgroundColor: c.value || (isHighContrast ? '#ffffff' : '#334155'),
+                        cursor: 'pointer',
+                        boxShadow: isSelected ? '0 0 6px rgba(255,255,255,0.6)' : 'none',
                       }}
                     />
-                  </div>
-                </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
-                <div style={{ display: 'flex', gap: '6px' }}>
+          {/* Tags */}
+          {!isViewMode ? (
+            <div>
+              <label
+                htmlFor="node-tags-input"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: textMuted,
+                  marginBottom: '6px',
+                }}
+              >
+                <Tag size={12} /> TAGS (SEPARADAS POR VÍRGULA)
+              </label>
+              <input
+                id="node-tags-input"
+                type="text"
+                value={tagInput}
+                onChange={(e) =>
+                  setEditingTag({ nodeId: selectedNode.id, value: e.target.value })
+                }
+                onBlur={handleTagBlur}
+                onKeyDown={handleTagKeyDown}
+                placeholder="ex: álgebra, cálculo, fundamentos"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: inputBg,
+                  border: inputBorder,
+                  color: textColor,
+                  borderRadius: '5px',
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          ) : selectedNode.data.tags && selectedNode.data.tags.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+              {selectedNode.data.tags.map((tag) => (
+                <span
+                  key={tag}
+                  style={{
+                    fontSize: '11px',
+                    background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#1e2433',
+                    border: isHighContrast ? '1px solid #000' : '1px solid #2e364f',
+                    color: isHighContrast ? '#000' : isLight ? '#475569' : '#93c5fd',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Documento PDF Acoplado */}
+          {(!isViewMode || selectedNode.data.pdfAttachment) && (
+            <div
+              style={{
+                background: sectionBg,
+                borderRadius: '6px',
+                padding: '12px',
+                border: sectionBorder,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: selectedNode.data.pdfAttachment ? '10px' : '0',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: textMuted,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                  }}
+                >
+                  <Paperclip size={12} /> DOCUMENTO PDF ACOPLADO
+                </span>
+
+                {selectedNode.data.pdfAttachment && (
                   <button
                     type="button"
                     onClick={() => setActiveInspectorView('pdf')}
                     style={{
-                      flex: 1,
                       background: isHighContrast ? '#000000' : '#4f46e5',
                       border: isHighContrast ? '2px solid #000000' : 'none',
-                      color: '#ffffff',
                       borderRadius: '4px',
-                      padding: '6px',
+                      color: '#ffffff',
+                      padding: '3px 8px',
                       fontSize: '11px',
                       fontWeight: 500,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
                       gap: '4px',
                     }}
                   >
-                    <Eye size={12} /> Abrir no Leitor Embutido
+                    <Eye size={11} /> Ver PDF
                   </button>
+                )}
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={handleOpenExternalPdf}
-                    title="Abrir no leitor de PDF do sistema (Zathura)"
+              {!selectedNode.data.pdfAttachment ? (
+                <div style={{ marginTop: '8px' }}>
+                  <label
                     style={{
-                      background: btnBg,
-                      border: btnBorder,
-                      color: textColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: inputBg,
+                      border: isHighContrast ? '2px dashed #000000' : isLight ? '1.5px dashed #cbd5e1' : '1.5px dashed #3b4259',
+                      borderRadius: '5px',
+                      padding: '10px',
+                      color: textMuted,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Plus size={13} />
+                    <span>Anexar Arquivo PDF (.pdf)</span>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleAttachPdfFile}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: inputBg,
+                      border: inputBorder,
                       borderRadius: '4px',
                       padding: '6px 10px',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
+                      fontSize: '12px',
                     }}
                   >
-                    <ExternalLink size={12} /> Zathura
-                  </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                      <FileText size={13} color={isHighContrast ? '#000000' : '#818cf8'} />
+                      <span
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '180px',
+                          color: textColor,
+                          fontWeight: 500,
+                        }}
+                        title={selectedNode.data.pdfAttachment.name}
+                      >
+                        {selectedNode.data.pdfAttachment.name}
+                      </span>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => removePdf(selectedNode.id)}
-                    title="Remover PDF acoplado"
-                    aria-label="Remover PDF"
-                    style={{
-                      background: isHighContrast ? '#ffffff' : '#2f1f24',
-                      border: isHighContrast ? '1.5px solid #000' : '1px solid #5a2e38',
-                      color: isHighContrast ? '#000' : '#f87171',
-                      borderRadius: '4px',
-                      padding: '6px 8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', color: textMuted }}>Pág:</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={selectedNode.data.pdfAttachment.page || 1}
+                        onChange={(e) => {
+                          const val = Math.max(1, parseInt(e.target.value, 10) || 1)
+                          setPdfPage(selectedNode.id, val)
+                        }}
+                        aria-label="Página de referência do PDF"
+                        style={{
+                          width: '40px',
+                          background: inputBg,
+                          border: inputBorder,
+                          color: textColor,
+                          borderRadius: '3px',
+                          padding: '2px 4px',
+                          fontSize: '11px',
+                          textAlign: 'center',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveInspectorView('pdf')}
+                      style={{
+                        flex: 1,
+                        background: isHighContrast ? '#000000' : '#4f46e5',
+                        border: isHighContrast ? '2px solid #000000' : 'none',
+                        color: '#ffffff',
+                        borderRadius: '4px',
+                        padding: '6px',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <Eye size={12} /> Abrir no Leitor Embutido
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleOpenExternalPdf}
+                      title="Abrir no leitor de PDF do sistema (Zathura)"
+                      style={{
+                        background: btnBg,
+                        border: btnBorder,
+                        color: textColor,
+                        borderRadius: '4px',
+                        padding: '6px 10px',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <ExternalLink size={12} /> Zathura
+                    </button>
+
+                    {!isViewMode && (
+                      <button
+                        type="button"
+                        onClick={() => removePdf(selectedNode.id)}
+                        title="Remover PDF acoplado"
+                        aria-label="Remover PDF"
+                        style={{
+                          background: isHighContrast ? '#ffffff' : '#2f1f24',
+                          border: isHighContrast ? '1.5px solid #000' : '1px solid #5a2e38',
+                          color: isHighContrast ? '#000' : '#f87171',
+                          borderRadius: '4px',
+                          padding: '6px 8px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Sub-objetos */}
           <div
@@ -1336,29 +1436,33 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
               >
                 <FolderTree size={14} color={isHighContrast ? '#000000' : '#818cf8'} /> Sub-objetos ({childNodes.length})
               </span>
-              <button
-                type="button"
-                onClick={handleAddChild}
-                style={{
-                  background: isHighContrast ? '#000000' : '#4f46e5',
-                  border: isHighContrast ? '1.5px solid #000000' : 'none',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <Plus size={12} /> Adicionar
-              </button>
+              {!isViewMode && (
+                <button
+                  type="button"
+                  onClick={handleAddChild}
+                  style={{
+                    background: isHighContrast ? '#000000' : '#4f46e5',
+                    border: isHighContrast ? '1.5px solid #000000' : 'none',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Plus size={12} /> Adicionar
+                </button>
+              )}
             </div>
 
             {childNodes.length === 0 ? (
               <div style={{ fontSize: '11px', color: textMuted, fontStyle: 'italic', padding: '4px 0' }}>
-                Nenhum sub-objeto ainda. Clique em "Adicionar" para subdividir este conceito.
+                {isViewMode
+                  ? 'Nenhum sub-objeto associado a este conceito.'
+                  : 'Nenhum sub-objeto ainda. Clique em "Adicionar" para subdividir este conceito.'}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1447,47 +1551,49 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
               <label style={{ fontSize: '11px', fontWeight: 600, color: textMuted }}>
                 DESCRIÇÃO CIENTÍFICA (MARKDOWN & LATEX)
               </label>
-              <div style={{ display: 'flex', background: btnBg, border: btnBorder, borderRadius: '4px', padding: '2px' }}>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('preview')}
-                  style={{
-                    background: activeTab === 'preview' ? (isHighContrast ? '#000' : '#2e3547') : 'transparent',
-                    border: 'none',
-                    color: activeTab === 'preview' ? '#ffffff' : textMuted,
-                    borderRadius: '3px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <FileText size={12} /> Ver
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('edit')}
-                  style={{
-                    background: activeTab === 'edit' ? (isHighContrast ? '#000' : '#2e3547') : 'transparent',
-                    border: 'none',
-                    color: activeTab === 'edit' ? '#ffffff' : textMuted,
-                    borderRadius: '3px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <Code size={12} /> Editar
-                </button>
-              </div>
+              {!isViewMode && (
+                <div style={{ display: 'flex', background: btnBg, border: btnBorder, borderRadius: '4px', padding: '2px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('preview')}
+                    style={{
+                      background: activeTab === 'preview' ? (isHighContrast ? '#000' : '#2e3547') : 'transparent',
+                      border: 'none',
+                      color: activeTab === 'preview' ? '#ffffff' : textMuted,
+                      borderRadius: '3px',
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <FileText size={12} /> Ver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('edit')}
+                    style={{
+                      background: activeTab === 'edit' ? (isHighContrast ? '#000' : '#2e3547') : 'transparent',
+                      border: 'none',
+                      color: activeTab === 'edit' ? '#ffffff' : textMuted,
+                      borderRadius: '3px',
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <Code size={12} /> Editar
+                  </button>
+                </div>
+              )}
             </div>
 
-            {activeTab === 'edit' ? (
+            {!isViewMode && activeTab === 'edit' ? (
               <textarea
                 value={selectedNode.data.description}
                 onChange={handleDescriptionChange}
@@ -1535,7 +1641,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                             nodes,
                             selectedNode.id,
                             handleNavigate,
-                            handleCreateWikiLink
+                            handleCreateWikiLink,
+                            isViewMode
                           )}
                         </p>
                       ),
@@ -1546,7 +1653,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                             nodes,
                             selectedNode.id,
                             handleNavigate,
-                            handleCreateWikiLink
+                            handleCreateWikiLink,
+                            isViewMode
                           )}
                         </li>
                       ),
@@ -1556,96 +1664,100 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                   </Markdown>
                 ) : (
                   <span style={{ color: textMuted, fontStyle: 'italic', fontSize: '12px' }}>
-                    Nenhuma descrição preenchida. Mude para a aba "Editar" para adicionar texto e fórmulas.
+                    {isViewMode
+                      ? 'Nenhuma descrição detalhada preenchida para este conceito.'
+                      : 'Nenhuma descrição preenchida. Mude para a aba "Editar" para adicionar texto e fórmulas.'}
                   </span>
                 )}
               </div>
             )}
           </div>
 
-          {/* Excluir Nó com Modal Dark de Confirmação */}
-          <div style={{ paddingTop: '8px', borderTop: asideBorder }}>
-            {!isConfirmingDelete ? (
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteNodeId(selectedNode.id)}
-                style={{
-                  width: '100%',
-                  background: isHighContrast ? '#ffffff' : '#2f1f24',
-                  border: isHighContrast ? '2px solid #000000' : '1px solid #5a2e38',
-                  color: isHighContrast ? '#000000' : '#f87171',
-                  borderRadius: '5px',
-                  padding: '8px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  fontWeight: 500,
-                }}
-              >
-                <Trash2 size={14} /> Excluir Nó e Sub-objetos
-              </button>
-            ) : (
-              <div
-                role="alertdialog"
-                aria-label="Confirmação de exclusão"
-                style={{
-                  background: isHighContrast ? '#ffffff' : '#23171d',
-                  border: isHighContrast ? '2px solid #000000' : '1px solid #7f1d1d',
-                  borderRadius: '6px',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', color: isHighContrast ? '#000000' : '#fca5a5', fontSize: '12px', lineHeight: 1.45 }}>
-                  <AlertTriangle size={16} color={isHighContrast ? '#000000' : '#f87171'} style={{ flexShrink: 0, marginTop: '1px' }} />
-                  <span>
-                    Tem certeza que deseja excluir <strong>"{selectedNode.data.title}"</strong>
-                    {subtreeCount > 0
-                      ? ` e todos os seus ${subtreeCount} sub-objeto(s) descendentes?`
-                      : '?'}
-                  </span>
+          {/* Excluir Nó com Modal Dark de Confirmação (apenas em modo de edição) */}
+          {!isViewMode && (
+            <div style={{ paddingTop: '8px', borderTop: asideBorder }}>
+              {!isConfirmingDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteNodeId(selectedNode.id)}
+                  style={{
+                    width: '100%',
+                    background: isHighContrast ? '#ffffff' : '#2f1f24',
+                    border: isHighContrast ? '2px solid #000000' : '1px solid #5a2e38',
+                    color: isHighContrast ? '#000000' : '#f87171',
+                    borderRadius: '5px',
+                    padding: '8px',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontWeight: 500,
+                  }}
+                >
+                  <Trash2 size={14} /> Excluir Nó e Sub-objetos
+                </button>
+              ) : (
+                <div
+                  role="alertdialog"
+                  aria-label="Confirmação de exclusão"
+                  style={{
+                    background: isHighContrast ? '#ffffff' : '#23171d',
+                    border: isHighContrast ? '2px solid #000000' : '1px solid #7f1d1d',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', color: isHighContrast ? '#000000' : '#fca5a5', fontSize: '12px', lineHeight: 1.45 }}>
+                    <AlertTriangle size={16} color={isHighContrast ? '#000000' : '#f87171'} style={{ flexShrink: 0, marginTop: '1px' }} />
+                    <span>
+                      Tem certeza que deseja excluir <strong>"{selectedNode.data.title}"</strong>
+                      {subtreeCount > 0
+                        ? ` e todos os seus ${subtreeCount} sub-objeto(s) descendentes?`
+                        : '?'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteNodeId(null)}
+                      style={{
+                        background: btnBg,
+                        border: btnBorder,
+                        color: textColor,
+                        borderRadius: '4px',
+                        padding: '5px 10px',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmDelete}
+                      style={{
+                        background: isHighContrast ? '#000000' : '#dc2626',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '4px',
+                        padding: '5px 10px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Confirmar Exclusão
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDeleteNodeId(null)}
-                    style={{
-                      background: btnBg,
-                      border: btnBorder,
-                      color: textColor,
-                      borderRadius: '4px',
-                      padding: '5px 10px',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmDelete}
-                    style={{
-                      background: isHighContrast ? '#000000' : '#dc2626',
-                      border: 'none',
-                      color: '#fff',
-                      borderRadius: '4px',
-                      padding: '5px 10px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Confirmar Exclusão
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </aside>
@@ -1658,7 +1770,8 @@ function renderWithWikiLinks(
   nodes: ReturnType<typeof useGraphStore.getState>['nodes'],
   sourceNodeId: string,
   navigateToNode: (id: string) => void,
-  createNodeFromWikiLink: (sourceId: string, title: string) => string
+  createNodeFromWikiLink: (sourceId: string, title: string) => string,
+  isViewMode: boolean = false
 ): React.ReactNode {
   return React.Children.map(children, (child) => {
     if (typeof child === 'string') {
@@ -1692,7 +1805,25 @@ function renderWithWikiLinks(
             )
           }
 
-          // Red Link: Conceito ainda não existe — cria com 1 clique
+          // No modo de visualização, links não mapeados aparecem apenas como texto elegante desabilitado
+          if (isViewMode) {
+            return (
+              <span
+                key={`unlinked-${title}`}
+                title={`Conceito não mapeado: "${title}"`}
+                style={{
+                  color: '#fbbf24',
+                  fontStyle: 'italic',
+                  margin: '0 2px',
+                  opacity: 0.85,
+                }}
+              >
+                [[{title}]]
+              </span>
+            )
+          }
+
+          // Red Link: Conceito ainda não existe — cria com 1 clique (modo de edição)
           return (
             <button
               type="button"
@@ -1738,7 +1869,8 @@ function renderWithWikiLinks(
           nodes,
           sourceNodeId,
           navigateToNode,
-          createNodeFromWikiLink
+          createNodeFromWikiLink,
+          isViewMode
         )
       )
     }

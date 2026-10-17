@@ -360,4 +360,25 @@ describe('Epistemap GraphStore (Spec-Driven Acceptance Tests v2)', () => {
     store.undo()
     expect(useGraphStore.getState().focusId).toBe(rootId)
   })
+
+  it('deve gerenciar editorMode (edição vs visualização) com persistência no localStorage', () => {
+    const store = useGraphStore.getState()
+    expect(store.editorMode).toBe('edit')
+
+    store.setEditorMode('view')
+    expect(useGraphStore.getState().editorMode).toBe('view')
+    expect(localStorage.getItem('epistemap:editor-mode')).toBe('view')
+
+    store.toggleEditorMode()
+    expect(useGraphStore.getState().editorMode).toBe('edit')
+    expect(localStorage.getItem('epistemap:editor-mode')).toBe('edit')
+
+    store.toggleEditorMode()
+    expect(useGraphStore.getState().editorMode).toBe('view')
+    expect(localStorage.getItem('epistemap:editor-mode')).toBe('view')
+
+    // Restaura para modo de edição
+    store.setEditorMode('edit')
+    expect(useGraphStore.getState().editorMode).toBe('edit')
+  })
 })

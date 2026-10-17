@@ -748,6 +748,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                         </tr>
                         <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
                           <td style={{ padding: '6px 0', width: '220px' }}>
+                            <kbd style={kbdStyle}>⌘</kbd> + <kbd style={kbdStyle}>E</kbd> / <kbd style={kbdStyle}>Ctrl</kbd> + <kbd style={kbdStyle}>E</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Alternar entre Modo de Edição e Modo de Visualização
+                          </td>
+                        </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0', width: '220px' }}>
                             <kbd style={kbdStyle}>⌘</kbd> + <kbd style={kbdStyle}>\</kbd> / <kbd style={kbdStyle}>Ctrl</kbd> + <kbd style={kbdStyle}>\</kbd>
                           </td>
                           <td style={{ padding: '6px 0', color: subtextColor }}>

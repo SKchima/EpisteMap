@@ -92,7 +92,15 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - Botão de alternância "Inspetor" com ícone dinâmico integrado na barra superior (`BreadcrumbsBar.tsx`).
   - Atalho global de teclado `Cmd+\` / `Ctrl+\` registrado no canvas (`App.tsx`) e catalogado no modal de atalhos (`SettingsModal.tsx`).
   - Preferência do usuário persistida localmente em `localStorage('epistemap:inspector-open')`.
-  - Suíte de 157 testes aprovada no Vitest e 0 warnings no Oxlint.
+- [x] **Fase 15 - Modo de Edição e Modo de Visualização (Canvas e Leitura Limpos)**:
+  - Estado `editorMode: 'edit' | 'view'` adicionado à store Zustand com persistência local em `localStorage('epistemap:editor-mode')` (padrão `'edit'`).
+  - Alternador segmentado `[ Edição | Visualização ]` na barra superior (`BreadcrumbsBar.tsx`) com ícones táteis (`Pencil` e `Eye`).
+  - No **Modo de Visualização (`view`)**:
+    - **Canvas**: Handles de conexão dos nós ocultados com `display: none !important; opacity: 0; pointer-events: none;`, botões `+ Sub` e `+ Sub-objeto` ocultados, arrasto de nós (`nodesDraggable={false}`) e novas conexões (`nodesConnectable={false}`) desativados, duplo clique no canvas desativado e indicador de drop target suprimido.
+    - **Barra Superior**: Controles de mutação ocultos (`Novo Conceito`, `Organizar Mapa`, `Desfazer / Refazer`) e seção de importação ocultada no menu `Arquivo` (mantendo opções de exportação PNG 2x e JSON).
+    - **Inspetor Lateral**: Ocultados inputs mutáveis (input de título, seletor de nó pai, paleta de cores, input de tags, aba/área de edição Markdown, dropzone de anexo PDF e botões de exclusão de nó/aresta). Título exibido em tipografia heading `h2`, tags como badges estáticas `#tag`, nó pai como link de navegação, preview Markdown e KaTeX renderizado diretamente, leitor PDF limpo, e WikiLinks não mapeados como texto elegante inerte `[[Nome]]`.
+    - **Atalhos de Teclado**: `Cmd+E` / `Ctrl+E` alterna instantaneamente entre modos. No modo visualização, atalhos de mutação (`Tab`, `Enter`, `Delete`, `Backspace`, `Cmd+Z`, `Cmd+Y`) são desativados. Atalho documentado em `SettingsModal.tsx`.
+  - Suíte de 160 testes aprovada no Vitest (14 arquivos) e 0 erros no Oxlint.
 
 ### [/] Em Andamento
 

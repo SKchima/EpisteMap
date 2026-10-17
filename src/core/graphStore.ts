@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import type { EpistemapStore, KnowledgeNode, KnowledgeEdge, ThemeMode } from './types'
+import type { EpistemapStore, KnowledgeNode, KnowledgeEdge, ThemeMode, EditorMode } from './types'
 import {
   getSubtreeIds,
   getAncestorIds,
@@ -12,6 +12,21 @@ import { findFreePosition, applyDagreLayout } from './layout'
 
 const THEME_STORAGE_KEY = 'epistemap:theme'
 const INSPECTOR_STORAGE_KEY = 'epistemap:inspector-open'
+const EDITOR_MODE_STORAGE_KEY = 'epistemap:editor-mode'
+
+export function getInitialEditorMode(): EditorMode {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(EDITOR_MODE_STORAGE_KEY)
+      if (saved === 'edit' || saved === 'view') {
+        return saved
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return 'edit'
+}
 
 export function getInitialInspectorOpen(): boolean {
   try {
@@ -108,6 +123,7 @@ export const useGraphStore = create<EpistemapStore>()(
       focusId: null,
       activeTag: null,
       theme: getInitialTheme(),
+      editorMode: getInitialEditorMode(),
       isInspectorOpen: getInitialInspectorOpen(),
       canUndo: false,
       canRedo: false,
@@ -669,6 +685,29 @@ export const useGraphStore = create<EpistemapStore>()(
           // ignore
         }
         set({ isInspectorOpen: open })
+      },
+
+      setEditorMode: (mode: EditorMode) => {
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(EDITOR_MODE_STORAGE_KEY, mode)
+          }
+        } catch {
+          // ignore
+        }
+        set({ editorMode: mode })
+      },
+
+      toggleEditorMode: () => {
+        const next: EditorMode = get().editorMode === 'edit' ? 'view' : 'edit'
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(EDITOR_MODE_STORAGE_KEY, next)
+          }
+        } catch {
+          // ignore
+        }
+        set({ editorMode: next })
       },
 
       undo: () => {

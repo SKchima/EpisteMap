@@ -29,6 +29,8 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
   const setFocus = useGraphStore((s) => s.setFocus)
   const select = useGraphStore((s) => s.select)
   const theme = useGraphStore((s) => s.theme)
+  const editorMode = useGraphStore((s) => s.editorMode)
+  const isViewMode = editorMode === 'view'
 
   // Subscrição estritamente discreta ao nível de zoom da câmera via selector Zustand do React Flow
   const storeLod = useStore(
@@ -149,7 +151,7 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
       }}
     >
       {/* Indicador visual de Drop Target */}
-      {isDropTarget && (
+      {!isViewMode && isDropTarget && (
         <div
           style={{
             position: 'absolute',
@@ -172,12 +174,14 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
       )}
 
       {/* Handles para conexões direcionais (esquerda para direita) */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="epistemap-handle"
-        style={{ background: handleColor, width: 8, height: 8 }}
-      />
+      {!isViewMode && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="epistemap-handle"
+          style={{ background: handleColor, width: 8, height: 8 }}
+        />
+      )}
 
       {/* Cabeçalho do Nó */}
       <div
@@ -424,31 +428,33 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
                 ))}
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddSubNode}
-              title="Adicionar sub-objeto"
-              style={{
-                background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#242a3a',
-                border: isHighContrast ? '1.5px solid #000' : isLight ? '1px solid #cbd5e1' : '1px solid #363e54',
-                borderRadius: '4px',
-                color: isHighContrast ? '#000000' : isLight ? '#4338ca' : '#c7d2fe',
-                padding: '2px 5px',
-                fontSize: '10px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2px',
-              }}
-            >
-              <Plus size={10} /> Sub
-            </button>
+            {!isViewMode && (
+              <button
+                type="button"
+                onClick={handleAddSubNode}
+                title="Adicionar sub-objeto"
+                style={{
+                  background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#242a3a',
+                  border: isHighContrast ? '1.5px solid #000' : isLight ? '1px solid #cbd5e1' : '1px solid #363e54',
+                  borderRadius: '4px',
+                  color: isHighContrast ? '#000000' : isLight ? '#4338ca' : '#c7d2fe',
+                  padding: '2px 5px',
+                  fontSize: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                }}
+              >
+                <Plus size={10} /> Sub
+              </button>
+            )}
           </div>
         </div>
       )}
 
       {/* Ação rápida para adicionar sub-objeto dentro de contêiner aberto */}
-      {isContainer && (
+      {!isViewMode && isContainer && (
         <div style={{ position: 'absolute', bottom: '6px', right: '10px' }}>
           <button
             type="button"
@@ -472,12 +478,14 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
         </div>
       )}
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="epistemap-handle"
-        style={{ background: handleColor, width: 8, height: 8 }}
-      />
+      {!isViewMode && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="epistemap-handle"
+          style={{ background: handleColor, width: 8, height: 8 }}
+        />
+      )}
     </div>
   )
 })

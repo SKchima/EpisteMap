@@ -60,6 +60,8 @@ const EpistemapCanvas: React.FC = () => {
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
   const toggleInspector = useGraphStore((s) => s.toggleInspector)
+  const editorMode = useGraphStore((s) => s.editorMode)
+  const toggleEditorMode = useGraphStore((s) => s.toggleEditorMode)
 
   const { screenToFlowPosition, fitView } = useReactFlow()
 
@@ -307,9 +309,11 @@ const EpistemapCanvas: React.FC = () => {
     [addEdge]
   )
 
-  // Duplo clique no canvas cria conceito diretamente no ponto clicado
+  // Duplo clique no canvas cria conceito diretamente no ponto clicado (apenas em modo de edição)
   const handleDoubleClick = useCallback(
     (event: React.MouseEvent) => {
+      if (editorMode === 'view') return
+
       const target = event.target as HTMLElement
       if (target.closest('.react-flow__node') || target.closest('.react-flow__edge')) return
 
@@ -323,7 +327,7 @@ const EpistemapCanvas: React.FC = () => {
         y: Math.round(flowPos.y),
       })
     },
-    [screenToFlowPosition, addRootNode]
+    [screenToFlowPosition, addRootNode, editorMode]
   )
 
   const handleSearchNavigate = useCallback(
@@ -369,6 +373,13 @@ const EpistemapCanvas: React.FC = () => {
         return
       }
 
+      // Cmd+E / Ctrl+E: Alternar entre Modo de Edição e Modo de Visualização
+      if (isMod && e.key.toLowerCase() === 'e') {
+        e.preventDefault()
+        toggleEditorMode()
+        return
+      }
+
       const target = e.target as HTMLElement
       const isEditingInput =
         target.tagName === 'INPUT' ||
@@ -386,8 +397,8 @@ const EpistemapCanvas: React.FC = () => {
         return
       }
 
-      // Undo / Redo
-      if (isMod && e.key.toLowerCase() === 'z') {
+      // Undo / Redo (apenas em modo de edição)
+      if (editorMode === 'edit' && isMod && e.key.toLowerCase() === 'z') {
         e.preventDefault()
         if (e.shiftKey) {
           redo()
@@ -397,7 +408,7 @@ const EpistemapCanvas: React.FC = () => {
         return
       }
 
-      if (isMod && e.key.toLowerCase() === 'y') {
+      if (editorMode === 'edit' && isMod && e.key.toLowerCase() === 'y') {
         e.preventDefault()
         redo()
         return
@@ -418,6 +429,9 @@ const EpistemapCanvas: React.FC = () => {
       }
 
       if (isSearchOpen || pendingDeleteNodeId) return
+
+      // Em Modo de Visualização, atalhos de mutação do grafo são desativados
+      if (editorMode === 'view') return
 
       const selectedNode = nodes.find((n) => n.id === selectedId)
       const selectedEdge = edges.find((edge) => edge.id === selectedId)
@@ -479,6 +493,8 @@ const EpistemapCanvas: React.FC = () => {
     removeEdge,
     removeNode,
     toggleInspector,
+    editorMode,
+    toggleEditorMode,
   ])
 
   const pendingDeleteNode = pendingDeleteNodeId
@@ -550,7 +566,14 @@ const EpistemapCanvas: React.FC = () => {
             onConnect={handleConnect}
             onConnectStart={() => setIsConnecting(true)}
             onConnectEnd={() => setIsConnecting(false)}
-            className={isConnecting ? 'is-connecting' : undefined}
+            nodesDraggable={editorMode === 'edit'}
+            nodesConnectable={editorMode === 'edit'}
+            className={[
+              isConnecting ? 'is-connecting' : '',
+              editorMode === 'view' ? 'epistemap-view-mode' : '',
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined}
             zoomOnDoubleClick={false}
             deleteKeyCode={null}
             fitView

@@ -107,4 +107,34 @@ describe('BreadcrumbsBar (Barra Superior de Navegação, Tags, Histórico e Expo
     expect(screen.getByRole('menuitem', { name: /Importar \.tex/i })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: /Importar JSON/i })).toBeInTheDocument()
   })
+
+  it('deve alternar entre Modo de Edição e Modo de Visualização ocultando botões de mutação e importação', () => {
+    useGraphStore.getState().setEditorMode('edit')
+    const { rerender } = render(<BreadcrumbsBar />)
+
+    // Modo Edição ativo por padrão
+    expect(screen.getByRole('button', { name: /Novo Conceito/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Organizar Mapa/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Desfazer/i })).toBeInTheDocument()
+
+    const viewModeBtn = screen.getByTestId('mode-view')
+    fireEvent.click(viewModeBtn)
+
+    expect(useGraphStore.getState().editorMode).toBe('view')
+
+    rerender(<BreadcrumbsBar />)
+
+    // No modo de visualização, controles de edição ficam ocultos
+    expect(screen.queryByRole('button', { name: /Novo Conceito/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Organizar Mapa/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Desfazer/i })).not.toBeInTheDocument()
+
+    // No dropdown de Arquivo em modo visualização, as opções de importação somem, mas exportação permanece
+    const menuBtn = screen.getByRole('button', { name: /Arquivo/i })
+    fireEvent.click(menuBtn)
+    expect(screen.getByRole('menuitem', { name: /Exportar PNG 2x/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /Exportar JSON/i })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /Importar \.tex/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /Importar JSON/i })).not.toBeInTheDocument()
+  })
 })

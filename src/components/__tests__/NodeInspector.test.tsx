@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { NodeInspector } from '../NodeInspector'
 import { useGraphStore } from '../../core/graphStore'
 
@@ -198,6 +198,57 @@ describe('NodeInspector (Inspetor de Conhecimento)', () => {
 
     rerender(<NodeInspector />)
     expect(screen.getByText('Inspetor de Conhecimento')).toBeInTheDocument()
+  })
+
+  it('deve renderizar nós e arestas no Modo de Visualização sem inputs mutáveis nem botões de exclusão', () => {
+    const store = useGraphStore.getState()
+    store.setEditorMode('view')
+
+    const parentId = store.addRootNode('Álgebra Abstrata')
+    const nodeId = store.addSubNode(parentId, 'Teoria de Galois')
+    store.updateNode(nodeId, {
+      description: 'Conecta extensões de corpos a [[Grupos de Galois]].',
+      tags: ['álgebra', 'matemática'],
+    })
+    store.select(nodeId)
+
+    const { rerender } = render(<NodeInspector />)
+
+    // Título é renderizado como cabeçalho de leitura e não input editável
+    expect(screen.getByRole('heading', { level: 2, name: 'Teoria de Galois' })).toBeInTheDocument()
+    expect(screen.queryByLabelText(/TÍTULO DO CONCEITO/i)).not.toBeInTheDocument()
+
+    // Inputs de tag, pai e botão de exclusão não devem existir
+    expect(screen.queryByLabelText(/TAGS/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Nó Pai')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Excluir Nó e Sub-objetos/i })).not.toBeInTheDocument()
+
+    // Tags aparecem como badges informativos (#álgebra, #matemática)
+    expect(screen.getByText('#álgebra')).toBeInTheDocument()
+    expect(screen.getByText('#matemática')).toBeInTheDocument()
+
+    // Red Link no modo visualização é texto estático desabilitado, não um botão de criação
+    expect(screen.queryByRole('button', { name: /Grupos de Galois/i })).not.toBeInTheDocument()
+    expect(screen.getByText('[[Grupos de Galois]]')).toBeInTheDocument()
+
+    // Agora seleciona uma aresta
+    act(() => {
+      const otherId = store.addRootNode('Extensão de Corpos')
+      const edgeId = store.addEdge(nodeId, otherId, 'estrutura')
+      store.select(edgeId)
+    })
+
+    rerender(<NodeInspector />)
+
+    expect(screen.getByText(/Relação Semântica/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/RÓTULO DA RELAÇÃO/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Excluir Relação/i })).not.toBeInTheDocument()
+    expect(screen.getByText('estrutura')).toBeInTheDocument()
+
+    // Restaura modo para edit
+    act(() => {
+      store.setEditorMode('edit')
+    })
   })
 })
 

@@ -65,6 +65,8 @@ export type BreadcrumbItem = {
   title: string
 }
 
+export type EditorMode = 'edit' | 'view'
+
 export interface EpistemapStore {
   nodes: KnowledgeNode[]
   edges: KnowledgeEdge[]
@@ -95,13 +97,16 @@ export interface EpistemapStore {
   updateEdgeLabel: (edgeId: string, label: string) => void
   removeEdge: (edgeId: string) => void
 
-  // Navegação, Busca, Tema e Layout
+  // Navegação, Busca, Tema, Modo e Layout
   select: (id: string | null) => void
   setFocus: (id: string | null) => void
   setActiveTag: (tag: string | null) => void
   setTheme: (theme: ThemeMode) => void
   navigateToNode: (nodeId: string) => void
   organizeMap: () => void
+  editorMode: EditorMode
+  setEditorMode: (mode: EditorMode) => void
+  toggleEditorMode: () => void
   isInspectorOpen: boolean
   toggleInspector: () => void
   setInspectorOpen: (open: boolean) => void

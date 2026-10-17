@@ -20,6 +20,8 @@ import {
   Keyboard,
   PanelRightClose,
   PanelRightOpen,
+  Pencil,
+  Eye,
 } from 'lucide-react'
 import { getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
@@ -59,6 +61,8 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const redo = useGraphStore((s) => s.redo)
   const isInspectorOpen = useGraphStore((s) => s.isInspectorOpen)
   const toggleInspector = useGraphStore((s) => s.toggleInspector)
+  const editorMode = useGraphStore((s) => s.editorMode)
+  const setEditorMode = useGraphStore((s) => s.setEditorMode)
 
   const [isExportingImage, setIsExportingImage] = useState(false)
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
@@ -452,52 +456,142 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           </div>
         )}
 
-        {/* Undo / Redo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {/* Alternador de Modo: Edição vs Visualização */}
+        <div
+          role="group"
+          aria-label="Modo de Operação"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#141824',
+            border: isHighContrast ? '2px solid #000000' : isLight ? '1px solid #cbd5e1' : '1px solid #282f42',
+            borderRadius: '6px',
+            padding: '2px',
+            gap: '2px',
+          }}
+        >
           <button
             type="button"
-            onClick={undo}
-            disabled={!canUndo}
-            title="Desfazer (Ctrl+Z / Cmd+Z)"
-            aria-label="Desfazer"
+            onClick={() => setEditorMode('edit')}
+            aria-pressed={editorMode === 'edit'}
+            title="Modo de Edição (Ctrl+E): Permite criar nós, editar textos e alterar ligações"
+            data-testid="mode-edit"
             style={{
-              background: btnBg,
-              color: canUndo ? textColor : (isHighContrast ? '#888' : '#475569'),
-              border: btnBorder,
-              borderRadius: '5px 0 0 5px',
-              padding: '5px 7px',
-              cursor: canUndo ? 'pointer' : 'not-allowed',
+              background:
+                editorMode === 'edit'
+                  ? isHighContrast
+                    ? '#000000'
+                    : '#4f46e5'
+                  : 'transparent',
+              color:
+                editorMode === 'edit'
+                  ? '#ffffff'
+                  : isHighContrast
+                    ? '#000000'
+                    : isLight
+                      ? '#64748b'
+                      : '#94a3b8',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '3px 8px',
+              fontSize: '11px',
+              fontWeight: editorMode === 'edit' ? 600 : 500,
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              opacity: canUndo ? 1 : 0.5,
+              gap: '4px',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Undo2 size={13} />
+            <Pencil size={11} />
+            <span>Edição</span>
           </button>
           <button
             type="button"
-            onClick={redo}
-            disabled={!canRedo}
-            title="Refazer (Ctrl+Shift+Z / Cmd+Shift+Z)"
-            aria-label="Refazer"
+            onClick={() => setEditorMode('view')}
+            aria-pressed={editorMode === 'view'}
+            title="Modo de Visualização (Ctrl+E): Mapa limpo para leitura sem botões e configurações de edição"
+            data-testid="mode-view"
             style={{
-              background: btnBg,
-              color: canRedo ? textColor : (isHighContrast ? '#888' : '#475569'),
-              borderTop: btnBorder,
-              borderRight: btnBorder,
-              borderBottom: btnBorder,
-              borderLeft: 'none',
-              borderRadius: '0 5px 5px 0',
-              padding: '5px 7px',
-              cursor: canRedo ? 'pointer' : 'not-allowed',
+              background:
+                editorMode === 'view'
+                  ? isHighContrast
+                    ? '#000000'
+                    : '#0284c7'
+                  : 'transparent',
+              color:
+                editorMode === 'view'
+                  ? '#ffffff'
+                  : isHighContrast
+                    ? '#000000'
+                    : isLight
+                      ? '#64748b'
+                      : '#94a3b8',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '3px 8px',
+              fontSize: '11px',
+              fontWeight: editorMode === 'view' ? 600 : 500,
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              opacity: canRedo ? 1 : 0.5,
+              gap: '4px',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Redo2 size={13} />
+            <Eye size={11} />
+            <span>Visualização</span>
           </button>
         </div>
+
+        {/* Undo / Redo (apenas em modo de edição) */}
+        {editorMode === 'edit' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Desfazer (Ctrl+Z / Cmd+Z)"
+              aria-label="Desfazer"
+              style={{
+                background: btnBg,
+                color: canUndo ? textColor : (isHighContrast ? '#888' : '#475569'),
+                border: btnBorder,
+                borderRadius: '5px 0 0 5px',
+                padding: '5px 7px',
+                cursor: canUndo ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                opacity: canUndo ? 1 : 0.5,
+              }}
+            >
+              <Undo2 size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Refazer (Ctrl+Shift+Z / Cmd+Shift+Z)"
+              aria-label="Refazer"
+              style={{
+                background: btnBg,
+                color: canRedo ? textColor : (isHighContrast ? '#888' : '#475569'),
+                borderTop: btnBorder,
+                borderRight: btnBorder,
+                borderBottom: btnBorder,
+                borderLeft: 'none',
+                borderRadius: '0 5px 5px 0',
+                padding: '5px 7px',
+                cursor: canRedo ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                opacity: canRedo ? 1 : 0.5,
+              }}
+            >
+              <Redo2 size={13} />
+            </button>
+          </div>
+        )}
 
         {/* Seletor de Tema Visual (3 Modos: Escuro, Claro, Alto Contraste Papel) */}
         <button
@@ -527,48 +621,53 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           </span>
         </button>
 
-        <button
-          type="button"
-          onClick={organizeMap}
-          title="Distribuir nós e subgrafos no canvas (Auto-layout Dagre)"
-          style={{
-            background: btnBg,
-            color: isHighContrast ? '#000000' : '#38bdf8',
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 10px',
-            fontSize: '12px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-          }}
-        >
-          <LayoutGrid size={13} />
-          Organizar Mapa
-        </button>
+        {/* Ações de Mutação do Grafo (apenas em modo de edição) */}
+        {editorMode === 'edit' && (
+          <>
+            <button
+              type="button"
+              onClick={organizeMap}
+              title="Distribuir nós e subgrafos no canvas (Auto-layout Dagre)"
+              style={{
+                background: btnBg,
+                color: isHighContrast ? '#000000' : '#38bdf8',
+                border: btnBorder,
+                borderRadius: '5px',
+                padding: '5px 10px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <LayoutGrid size={13} />
+              Organizar Mapa
+            </button>
 
-        <button
-          type="button"
-          onClick={handleCreateRoot}
-          style={{
-            background: isHighContrast ? '#000000' : '#4f46e5',
-            color: '#fff',
-            border: isHighContrast ? '2px solid #000000' : 'none',
-            borderRadius: '5px',
-            padding: '5px 10px',
-            fontSize: '12px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-          }}
-        >
-          <Plus size={14} />
-          Novo Conceito
-        </button>
+            <button
+              type="button"
+              onClick={handleCreateRoot}
+              style={{
+                background: isHighContrast ? '#000000' : '#4f46e5',
+                color: '#fff',
+                border: isHighContrast ? '2px solid #000000' : 'none',
+                borderRadius: '5px',
+                padding: '5px 10px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <Plus size={14} />
+              Novo Conceito
+            </button>
+          </>
+        )}
 
         {/* Menu Dropdown de Arquivo (Importar, Exportar, PNG 2x) */}
         <div ref={fileMenuRef} style={{ position: 'relative' }}>
@@ -738,92 +837,95 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                 </div>
               </button>
 
-              {/* Separador */}
-              <div
-                style={{
-                  height: '1px',
-                  backgroundColor: isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#262d3d',
-                  margin: '4px 4px',
-                }}
-              />
+              {/* Seção Importar (apenas em modo de edição) */}
+              {editorMode === 'edit' && (
+                <>
+                  <div
+                    style={{
+                      height: '1px',
+                      backgroundColor: isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#262d3d',
+                      margin: '4px 4px',
+                    }}
+                  />
 
-              {/* Seção Importar */}
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  color: menuSectionLabelColor,
-                  padding: '4px 8px 2px 8px',
-                }}
-              >
-                Importar
-              </div>
-
-              <button
-                type="button"
-                role="menuitem"
-                className="epistemap-dropdown-item"
-                onClick={() => {
-                  setIsFileMenuOpen(false)
-                  texInputRef.current?.click()
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '6px 8px',
-                  background: 'transparent',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: textColor,
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <FileCode size={14} color="#818cf8" />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500 }}>Importar .tex</div>
-                  <div style={{ fontSize: '10px', color: itemDescColor }}>
-                    Documento ou compêndio LaTeX
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      color: menuSectionLabelColor,
+                      padding: '4px 8px 2px 8px',
+                    }}
+                  >
+                    Importar
                   </div>
-                </div>
-              </button>
 
-              <button
-                type="button"
-                role="menuitem"
-                className="epistemap-dropdown-item"
-                onClick={() => {
-                  setIsFileMenuOpen(false)
-                  jsonInputRef.current?.click()
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '6px 8px',
-                  background: 'transparent',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: textColor,
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <Upload size={14} color="#f59e0b" />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500 }}>Importar JSON</div>
-                  <div style={{ fontSize: '10px', color: itemDescColor }}>
-                    Restaurar mapa de arquivo .json
-                  </div>
-                </div>
-              </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="epistemap-dropdown-item"
+                    onClick={() => {
+                      setIsFileMenuOpen(false)
+                      texInputRef.current?.click()
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '6px 8px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: '4px',
+                      color: textColor,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <FileCode size={14} color="#818cf8" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 500 }}>Importar .tex</div>
+                      <div style={{ fontSize: '10px', color: itemDescColor }}>
+                        Documento ou compêndio LaTeX
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="epistemap-dropdown-item"
+                    onClick={() => {
+                      setIsFileMenuOpen(false)
+                      jsonInputRef.current?.click()
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '6px 8px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: '4px',
+                      color: textColor,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Upload size={14} color="#f59e0b" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 500 }}>Importar JSON</div>
+                      <div style={{ fontSize: '10px', color: itemDescColor }}>
+                        Restaurar mapa de arquivo .json
+                      </div>
+                    </div>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
