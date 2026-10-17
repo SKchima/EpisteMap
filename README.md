@@ -43,14 +43,6 @@ EpisteMap is an infinite canvas application for structuring academic notes, math
 - Embedded side-panel viewer with page navigation and zoom controls.
 - External reader option opens the PDF at the referenced page in system readers (e.g., Zathura via `#page=N`).
 
-### Visual Themes
-- Three modes: Dark (default), Light, and High-Contrast (black borders on pure white background).
-- Persisted in `localStorage`.
-
-### Connection Handles
-- Handles remain hidden by default.
-- Handles appear on selected nodes and valid target nodes during edge dragging.
-
 ### Search (Cmd+K)
 - Searches titles, tags, and content text.
 - Expands collapsed parent nodes and centers the viewport on the selected node.
@@ -115,6 +107,3 @@ epistemap status  # Shows server PID and port
 epistemap stop    # Stops background server
 epistemap dev     # Starts in development mode with HMR
 ```
-
----
-
