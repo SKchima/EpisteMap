@@ -11,6 +11,7 @@ import {
   Palette,
   HardDrive,
   AlertTriangle,
+  Keyboard,
 } from 'lucide-react'
 import { useGraphStore } from '../core/graphStore'
 import { initialSeedNodes, initialSeedEdges } from '../core/seedData'
@@ -26,12 +27,15 @@ import {
 } from '../core/backup'
 import type { ThemeMode } from '../core/types'
 
+export type SettingsTab = 'backup' | 'theme' | 'shortcuts' | 'security' | 'danger'
+
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
+  initialTab?: SettingsTab
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab = 'backup' }) => {
   const nodes = useGraphStore((s) => s.nodes)
   const edges = useGraphStore((s) => s.edges)
   const theme = useGraphStore((s) => s.theme)
@@ -39,7 +43,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const loadGraph = useGraphStore((s) => s.loadGraph)
   const resetGraph = useGraphStore((s) => s.resetGraph)
 
-  const [activeTab, setActiveTab] = useState<'backup' | 'theme' | 'security' | 'danger'>('backup')
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab)
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab)
+
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab)
+    setActiveTab(initialTab)
+  }
+
   const [snapshots, setSnapshots] = useState<LocalSnapshot[]>(() => getLocalSnapshots())
   const [snapshotLabel, setSnapshotLabel] = useState('')
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null)
@@ -157,6 +168,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const borderColor = isPaper ? '#000000' : isLight ? '#cbd5e1' : '#282f42'
   const cardBg = isPaper ? '#ffffff' : isLight ? '#ffffff' : '#1a1f2e'
   const borderRule = isPaper ? '2px solid #000000' : `1px solid ${borderColor}`
+
+  const kbdStyle: React.CSSProperties = {
+    fontSize: '10px',
+    fontWeight: 600,
+    fontFamily: 'monospace',
+    padding: '2px 5px',
+    borderRadius: isPaper ? '0' : '4px',
+    background: isPaper ? '#f4f4f5' : isLight ? '#e2e8f0' : '#202637',
+    color: textColor,
+    border: isPaper ? '1px solid #000' : isLight ? '1px solid #cbd5e1' : '1px solid #333d56',
+    boxShadow: isPaper ? '1px 1px 0 #000' : '0 1px 1px rgba(0,0,0,0.2)',
+  }
 
   return (
     <div
@@ -298,6 +321,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               }}
             >
               <Palette size={15} /> Temas & Visual
+            </button>
+
+            <button
+              onClick={() => setActiveTab('shortcuts')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                borderRadius: isPaper ? '0' : '6px',
+                border: isPaper && activeTab === 'shortcuts' ? '2px solid #000' : 'none',
+                background: activeTab === 'shortcuts' ? (isPaper ? '#fff' : '#262d40') : 'transparent',
+                color: activeTab === 'shortcuts' ? (isPaper ? '#000' : '#fff') : subtextColor,
+                fontWeight: activeTab === 'shortcuts' ? 600 : 500,
+                fontSize: '12px',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              <Keyboard size={15} /> Atalhos de Teclado
             </button>
 
             <button
@@ -674,6 +717,132 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       </div>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'shortcuts' && (
+              <div>
+                <h3 style={{ fontSize: '14px', margin: '0 0 6px 0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Keyboard size={16} color={isPaper ? '#000000' : '#818cf8'} /> Atalhos de Teclado
+                </h3>
+                <p style={{ fontSize: '12px', color: subtextColor, margin: '0 0 16px 0' }}>
+                  Comandos para navegação, criação hierárquica e histórico de alterações.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '480px', overflowY: 'auto' }}>
+                  {/* Grupo: Navegação & Canvas */}
+                  <div style={{ background: cardBg, border: borderRule, borderRadius: isPaper ? '0' : '8px', padding: '14px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '10px', color: textColor }}>
+                      Navegação &amp; Foco
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                      <tbody>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0', width: '220px' }}>
+                            <kbd style={kbdStyle}>⌘</kbd> + <kbd style={kbdStyle}>K</kbd> / <kbd style={kbdStyle}>Ctrl</kbd> + <kbd style={kbdStyle}>K</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Busca global de conceitos, tags e texto
+                          </td>
+                        </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>Esc</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Limpar seleção ativa ou subir um nível no drill-down
+                          </td>
+                        </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0' }}>
+                            <span style={{ fontWeight: 500 }}>Duplo clique no canvas</span>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Criar novo conceito raiz nas coordenadas do cursor
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>?</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Abrir este painel de atalhos
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Grupo: Estrutura & Edição */}
+                  <div style={{ background: cardBg, border: borderRule, borderRadius: isPaper ? '0' : '8px', padding: '14px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '10px', color: textColor }}>
+                      Estrutura &amp; Nós
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                      <tbody>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0', width: '220px' }}>
+                            <kbd style={kbdStyle}>Tab</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Criar sub-conceito filho dentro do nó selecionado
+                          </td>
+                        </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>Enter</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Criar conceito irmão (mesmo pai que o nó selecionado)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>Delete</kbd> / <kbd style={kbdStyle}>Backspace</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Excluir conceito ou aresta (com confirmação se possuir filhos)
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Grupo: Histórico & Configurações */}
+                  <div style={{ background: cardBg, border: borderRule, borderRadius: isPaper ? '0' : '8px', padding: '14px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '10px', color: textColor }}>
+                      Histórico &amp; Sistema
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                      <tbody>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0', width: '220px' }}>
+                            <kbd style={kbdStyle}>⌘</kbd> + <kbd style={kbdStyle}>Z</kbd> / <kbd style={kbdStyle}>Ctrl</kbd> + <kbd style={kbdStyle}>Z</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Desfazer última alteração (Undo)
+                          </td>
+                        </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>⌘</kbd> + <kbd style={kbdStyle}>⇧</kbd> + <kbd style={kbdStyle}>Z</kbd> / <kbd style={kbdStyle}>Ctrl</kbd> + <kbd style={kbdStyle}>Y</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Refazer alteração (Redo)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>⌘</kbd> + <kbd style={kbdStyle}>,</kbd> / <kbd style={kbdStyle}>Ctrl</kbd> + <kbd style={kbdStyle}>,</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Abrir Configurações e Gestão de Backups
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}

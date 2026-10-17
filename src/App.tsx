@@ -32,7 +32,7 @@ import { CompoundNode } from './components/CompoundNode'
 import { BreadcrumbsBar } from './components/BreadcrumbsBar'
 import { NodeInspector } from './components/NodeInspector'
 import { CommandPalette } from './components/CommandPalette'
-import { SettingsModal } from './components/SettingsModal'
+import { SettingsModal, type SettingsTab } from './components/SettingsModal'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 const STORAGE_KEY_V2 = 'epistemap:v2'
@@ -62,6 +62,7 @@ const EpistemapCanvas: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('backup')
   const [isConnecting, setIsConnecting] = useState(false)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [dragPositions, setDragPositions] = useState<Record<string, { x: number; y: number }>>({})
@@ -356,6 +357,14 @@ const EpistemapCanvas: React.FC = () => {
 
       if (isEditingInput) return
 
+      // ?: Atalhos de Teclado
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault()
+        setSettingsTab('shortcuts')
+        setIsSettingsOpen(true)
+        return
+      }
+
       // Undo / Redo
       if (isMod && e.key.toLowerCase() === 'z') {
         e.preventDefault()
@@ -490,7 +499,14 @@ const EpistemapCanvas: React.FC = () => {
     >
       <BreadcrumbsBar
         onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={() => {
+          setSettingsTab('backup')
+          setIsSettingsOpen(true)
+        }}
+        onOpenShortcuts={() => {
+          setSettingsTab('shortcuts')
+          setIsSettingsOpen(true)
+        }}
       />
 
       <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
@@ -556,6 +572,7 @@ const EpistemapCanvas: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        initialTab={settingsTab}
       />
 
       {/* Modal de Confirmação ao Excluir Subárvore via Teclado */}

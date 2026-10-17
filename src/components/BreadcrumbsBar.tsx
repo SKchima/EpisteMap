@@ -16,6 +16,7 @@ import {
   Contrast,
   FileCode,
   Settings,
+  Keyboard,
 } from 'lucide-react'
 import { getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
@@ -27,9 +28,14 @@ import { parseTexDocument } from '../core/texImporter'
 export interface BreadcrumbsBarProps {
   onOpenSearch?: () => void
   onOpenSettings?: () => void
+  onOpenShortcuts?: () => void
 }
 
-export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({ onOpenSearch, onOpenSettings }) => {
+export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
+  onOpenSearch,
+  onOpenSettings,
+  onOpenShortcuts,
+}) => {
   const focusId = useGraphStore((s) => s.focusId)
   const nodes = useGraphStore((s) => s.nodes)
   const edges = useGraphStore((s) => s.edges)
@@ -617,6 +623,42 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({ onOpenSearch, on
             style={{ display: 'none' }}
           />
         </label>
+
+        {onOpenShortcuts && (
+          <button
+            type="button"
+            onClick={onOpenShortcuts}
+            title="Atalhos de Teclado (?)"
+            style={{
+              background: btnBg,
+              color: textColor,
+              border: btnBorder,
+              borderRadius: '5px',
+              padding: '5px 8px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <Keyboard size={13} />
+            <span style={{ fontSize: '11px', fontWeight: 500 }}>Atalhos</span>
+            <kbd
+              style={{
+                fontSize: '10px',
+                background: isHighContrast ? '#ffffff' : isLight ? '#e2e8f0' : '#252b3d',
+                color: textColor,
+                padding: '0 3px',
+                borderRadius: '3px',
+                border: btnBorder,
+                marginLeft: '1px',
+              }}
+            >
+              ?
+            </kbd>
+          </button>
+        )}
 
         {onOpenSettings && (
           <button

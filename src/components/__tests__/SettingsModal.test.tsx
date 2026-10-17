@@ -20,8 +20,16 @@ describe('SettingsModal Component', () => {
     expect(screen.getByRole('dialog', { name: /configurações e backups/i })).toBeInTheDocument()
     expect(screen.getByText('Backups & Snapshots')).toBeInTheDocument()
     expect(screen.getByText('Temas & Visual')).toBeInTheDocument()
+    expect(screen.getByText('Atalhos de Teclado')).toBeInTheDocument()
     expect(screen.getByText('Segurança & Local-First')).toBeInTheDocument()
     expect(screen.getByText('Zona de Perigo')).toBeInTheDocument()
+  })
+
+  it('deve renderizar a aba de atalhos diretamente quando initialTab="shortcuts"', () => {
+    render(<SettingsModal isOpen={true} onClose={vi.fn()} initialTab="shortcuts" />)
+    expect(screen.getByText('Navegação & Foco')).toBeInTheDocument()
+    expect(screen.getByText('Estrutura & Nós')).toBeInTheDocument()
+    expect(screen.getByText('Histórico & Sistema')).toBeInTheDocument()
   })
 
   it('deve permitir criar um snapshot local e exibi-lo na lista', () => {
@@ -37,6 +45,10 @@ describe('SettingsModal Component', () => {
 
   it('deve alternar entre as abas ao clicar', () => {
     render(<SettingsModal isOpen={true} onClose={vi.fn()} />)
+    const shortcutsTabBtn = screen.getByRole('button', { name: /atalhos de teclado/i })
+    fireEvent.click(shortcutsTabBtn)
+    expect(screen.getByText('Navegação & Foco')).toBeInTheDocument()
+
     const securityTabBtn = screen.getByRole('button', { name: /segurança & local-first/i })
     fireEvent.click(securityTabBtn)
 
