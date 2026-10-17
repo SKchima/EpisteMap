@@ -148,12 +148,6 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
       >
         <Handle
           type="target"
-          position={Position.Top}
-          className="epistemap-handle"
-          style={{ background: handleColor, width: 8, height: 8 }}
-        />
-        <Handle
-          type="target"
           position={Position.Left}
           className="epistemap-handle"
           style={{ background: handleColor, width: 8, height: 8 }}
@@ -207,12 +201,6 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
           )}
         </div>
 
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className="epistemap-handle"
-          style={{ background: handleColor, width: 8, height: 8 }}
-        />
         <Handle
           type="source"
           position={Position.Right}
@@ -291,13 +279,7 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
         </div>
       )}
 
-      {/* Handles para conexões direcionais */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="epistemap-handle"
-        style={{ background: handleColor, width: 8, height: 8 }}
-      />
+      {/* Handles para conexões direcionais (esquerda para direita) */}
       <Handle
         type="target"
         position={Position.Left}
@@ -482,25 +464,24 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
                   fontSize: '11px',
                   color: cardDescColor,
                   lineHeight: 1.35,
-                  maxHeight: '32px',
+                  flex: 1,
+                  maxHeight: '120px',
                   overflowY: 'auto',
                   paddingRight: '2px',
                 }}
                 dangerouslySetInnerHTML={{ __html: renderMathText(nodeData.description) }}
               />
             ) : (
-              /* Caso STANDARD: visual resumido truncado */
+              /* Caso STANDARD: visual resumido com expansão natural para baixo */
               <div
                 style={{
                   fontSize: '11px',
                   color: cardDescColor,
                   lineHeight: 1.35,
-                  maxHeight: '32px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
+                  flex: 1,
+                  maxHeight: '80px',
+                  overflowY: 'auto',
+                  paddingRight: '2px',
                 }}
               >
                 {formatCompactDescription(nodeData.description)}
@@ -595,12 +576,6 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
         </div>
       )}
 
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="epistemap-handle"
-        style={{ background: handleColor, width: 8, height: 8 }}
-      />
       <Handle
         type="source"
         position={Position.Right}

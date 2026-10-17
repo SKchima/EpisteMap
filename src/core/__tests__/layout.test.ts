@@ -219,12 +219,12 @@ describe('distribuição espacial e auto-layout Dagre', () => {
     const p3 = layouted.find((n) => n.id === 'r3')!.position
     const p4 = layouted.find((n) => n.id === 'r4')!.position
 
-    // r1 e r3 na coluna 0, r2 e r4 na coluna 1
-    expect(p1.x).toBe(p3.x)
-    expect(p2.x).toBe(p4.x)
-    expect(p1.x).not.toBe(p2.x)
-    expect(p3.y).toBeGreaterThan(p1.y)
-    expect(p4.y).toBeGreaterThan(p2.y)
+    // Na trilha de conhecimento horizontal, raízes desconexas progridem da esquerda para a direita
+    expect(p1.x).toBeLessThan(p2.x)
+    expect(p2.x).toBeLessThan(p3.x)
+    expect(p3.x).toBeLessThan(p4.x)
+    expect(p1.y).toBe(p2.y)
+    expect(p2.y).toBe(p3.y)
   })
 
   it('no modo macro, recolhe nós filhos para dentro da matéria raiz evitando sobreposição', () => {
@@ -250,5 +250,64 @@ describe('distribuição espacial e auto-layout Dagre', () => {
     expect(rootFlow.data.collapsed).toBe(true)
     expect(rootFlow.data.childCount).toBe(2)
     expect(rootFlow.data.childrenSummary).toHaveLength(2)
+  })
+
+  it('organiza sub-nós (definições e teoremas) lado a lado na mesma linha horizontal (LR)', () => {
+    const nodes = [
+      makeNode('grupo', null, { title: 'Teoria dos Grupos', collapsed: false }),
+      makeNode('axioma', 'grupo', { title: 'Axiomas de Grupo' }),
+      makeNode('definicao', 'grupo', { title: 'Subgrupos' }),
+      makeNode('teorema', 'grupo', { title: 'Teorema de Lagrange' }),
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, [], { focusId: null, selectedId: null })
+    const axioma = flowNodes.find((n) => n.id === 'axioma')!
+    const definicao = flowNodes.find((n) => n.id === 'definicao')!
+    const teorema = flowNodes.find((n) => n.id === 'teorema')!
+
+    // Todos devem estar na mesma linha superior (y idêntico, nenhum vai para baixo de outro)
+    expect(axioma.position.y).toBe(definicao.position.y)
+    expect(definicao.position.y).toBe(teorema.position.y)
+
+    // E dispostos rigorosamente lado a lado (x crescente para a direita)
+    expect(axioma.position.x).toBeLessThan(definicao.position.x)
+    expect(definicao.position.x).toBeLessThan(teorema.position.x)
+  })
+
+  it('posiciona axiomas e precedentes no extremo esquerdo por ordenação topológica', () => {
+    const nodes = [
+      makeNode('grupo', null, { title: 'Teoria dos Grupos', collapsed: false }),
+      // Fornecido em ordem invertida intencionalmente
+      makeNode('teorema', 'grupo', { title: 'Teorema de Lagrange' }),
+      makeNode('axioma', 'grupo', { title: 'Axiomas de Grupo' }),
+    ]
+    const edges = [
+      { id: 'e1', source: 'axioma', target: 'teorema', label: 'fundamenta' },
+    ]
+
+    const { flowNodes } = buildFlowElements(nodes, edges, { focusId: null, selectedId: null })
+    const axioma = flowNodes.find((n) => n.id === 'axioma')!
+    const teorema = flowNodes.find((n) => n.id === 'teorema')!
+
+    // O axioma deve ser colocado à esquerda do teorema que depende dele
+    expect(axioma.position.x).toBeLessThan(teorema.position.x)
+  })
+
+  it('expande nós folha verticalmente para baixo quando possuem descrições com equações ricas', () => {
+    const nodeSimples = makeNode('leaf1', null, { description: 'Breve nota' })
+    const nodeRico = makeNode('leaf2', null, {
+      description: 'Definição formal:\n$$\\int_{-\\infty}^\\infty e^{-x^2} dx = \\sqrt{\\pi}$$\nPropriedades e axiomas detalhados com demonstração extensa.',
+    })
+
+    const sizes = computeNodeSizes([nodeSimples, nodeRico])
+    const s1 = sizes.get('leaf1')!
+    const s2 = sizes.get('leaf2')!
+
+    // Largura permanece padronizada no grid horizontal
+    expect(s1.width).toBe(232)
+    expect(s2.width).toBe(232)
+
+    // Altura se estende verticalmente para baixo para acomodar o texto
+    expect(s2.height).toBeGreaterThan(s1.height)
   })
 })

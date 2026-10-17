@@ -68,6 +68,16 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
 
 ### [/] Em Andamento
 
+- [x] **Fase 11 - Trilha de Conhecimento Horizontal (Layout LR & Fluxo Didático)**:
+  - Organização padrão estrita da esquerda para a direita (LR) para todas as ligações e nós do grafo.
+  - Sub-nós (axiomas, definições, teoremas e corolários) dispostos lado a lado horizontalmente dentro dos contêineres, ordenados topologicamente com axiomas e precedentes no extremo esquerdo ([`orderChildrenHorizontal`](file:///home/kchima/repos/epistemap/src/core/layout.ts#L40-L100)).
+  - O conteúdo textual e fórmulas matemáticas expandem verticalmente para baixo dentro de cada cartão ([`calculateLeafHeight`](file:///home/kchima/repos/epistemap/src/core/layout.ts#L18-L38)).
+  - Handles de conexão restritos à entrada esquerda (`Position.Left`) e saída direita (`Position.Right`) em [CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx) para fluxo contínuo em esteira de conhecimento.
+  - Distribuição horizontal de raízes desconexas no Dagre (`applyDagreLayout`).
+  - Cobertura com 157 testes automatizados aprovados no Vitest.
+
+### [/] Em Andamento
+
 - _(Nenhuma tarefa pendente no momento)_
 
 ### [ ] A Fazer (Backlog Futuro)

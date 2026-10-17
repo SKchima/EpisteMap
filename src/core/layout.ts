@@ -11,57 +11,144 @@ export const GAP = 16
 
 export type NodeSize = { width: number; height: number }
 
+/**
+ * Calcula a altura vertical de um nó folha baseado no seu conteúdo textual/matemático.
+ * O texto expande naturalmente para baixo dentro de limites seguros.
+ */
+export function calculateLeafHeight(node: KnowledgeNode): number {
+  if (!node.data.description) return LEAF_HEIGHT
+  const text = node.data.description.trim()
+  if (text.length === 0) return LEAF_HEIGHT
+
+  const hasDisplayMath = text.includes('$$')
+  const charCount = text.length
+  const lineCount = text.split('\n').filter((l) => l.trim().length > 0).length
+
+  let extra = 0
+  if (hasDisplayMath) extra += 40
+  if (charCount > 80 || lineCount > 2) {
+    extra += Math.min(60, Math.floor(charCount / 50) * 16)
+  }
+
+  return Math.min(240, Math.max(LEAF_HEIGHT, LEAF_HEIGHT + extra))
+}
+
+/**
+ * Ordena os sub-nós horizontalmente de modo que axiomas e nós de grau de entrada zero
+ * fiquem no extremo esquerdo (início da trilha), seguidos pelas suas deduções e teoremas.
+ */
+export function orderChildrenHorizontal(
+  children: KnowledgeNode[],
+  edges: KnowledgeEdge[] = []
+): KnowledgeNode[] {
+  if (children.length <= 1) return children
+
+  const childIdSet = new Set(children.map((c) => c.id))
+  const inDegree = new Map<string, number>()
+  const adj = new Map<string, string[]>()
+
+  for (const c of children) {
+    inDegree.set(c.id, 0)
+    adj.set(c.id, [])
+  }
+
+  for (const e of edges) {
+    if (childIdSet.has(e.source) && childIdSet.has(e.target) && e.source !== e.target) {
+      adj.get(e.source)?.push(e.target)
+      inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1)
+    }
+  }
+
+  // Fila para ordenação topológica (Kahn) preservando estabilidade
+  const queue: KnowledgeNode[] = []
+  for (const c of children) {
+    if ((inDegree.get(c.id) || 0) === 0) {
+      queue.push(c)
+    }
+  }
+
+  const result: KnowledgeNode[] = []
+  const visited = new Set<string>()
+
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    if (visited.has(current.id)) continue
+    visited.add(current.id)
+    result.push(current)
+
+    const neighbors = adj.get(current.id) || []
+    for (const nxtId of neighbors) {
+      const nextDegree = (inDegree.get(nxtId) || 1) - 1
+      inDegree.set(nxtId, nextDegree)
+      if (nextDegree === 0) {
+        const nextNode = children.find((c) => c.id === nxtId)
+        if (nextNode && !visited.has(nxtId)) {
+          queue.push(nextNode)
+        }
+      }
+    }
+  }
+
+  // Se houver ciclos ou nós restantes, anexa-os na ordem original
+  if (result.length < children.length) {
+    for (const c of children) {
+      if (!visited.has(c.id)) {
+        result.push(c)
+      }
+    }
+  }
+
+  return result
+}
+
 export function computeNodeSizes(
   nodes: KnowledgeNode[],
-  focusId: string | null = null,
-  isMacro: boolean = false
+  edgesOrFocusId: KnowledgeEdge[] | string | null = null,
+  focusIdOrMacro: string | null | boolean = null,
+  isMacroFlag: boolean = false
 ): Map<string, NodeSize> {
+  const edges: KnowledgeEdge[] = Array.isArray(edgesOrFocusId) ? edgesOrFocusId : []
+  const focusId: string | null = Array.isArray(edgesOrFocusId)
+    ? (focusIdOrMacro as string | null)
+    : (edgesOrFocusId as string | null)
+  const isMacro: boolean = Array.isArray(edgesOrFocusId)
+    ? isMacroFlag
+    : Boolean(focusIdOrMacro)
+
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
   const sizeMap = new Map<string, NodeSize>()
 
   function calculateSize(nodeId: string, visited: Set<string> = new Set()): NodeSize {
     if (sizeMap.has(nodeId)) return sizeMap.get(nodeId)!
-    if (visited.has(nodeId)) return { width: LEAF_WIDTH, height: LEAF_HEIGHT }
-    visited.add(nodeId)
-
     const node = nodeMap.get(nodeId)
     if (!node) return { width: LEAF_WIDTH, height: LEAF_HEIGHT }
 
-    const children = nodes.filter((n) => n.parentId === nodeId)
+    const leafHeight = calculateLeafHeight(node)
+    if (visited.has(nodeId)) return { width: LEAF_WIDTH, height: leafHeight }
+    visited.add(nodeId)
+
+    const rawChildren = nodes.filter((n) => n.parentId === nodeId)
     const isNodeCollapsed = isMacro
       ? (focusId !== null ? nodeId !== focusId : true)
       : (nodeId === focusId ? false : Boolean(node.data.collapsed))
-    if (children.length === 0 || isNodeCollapsed) {
-      const leaf = { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+
+    if (rawChildren.length === 0 || isNodeCollapsed) {
+      const leaf = { width: LEAF_WIDTH, height: leafHeight }
       sizeMap.set(nodeId, leaf)
       return leaf
     }
 
+    const children = orderChildrenHorizontal(rawChildren, edges)
     const childSizes = children.map((c) => calculateSize(c.id, new Set(visited)))
-    const k = children.length
-    const cols = Math.min(k, Math.max(1, Math.ceil(Math.sqrt(k))))
-    const rows = Math.ceil(k / cols)
 
-    const colWidths = new Array<number>(cols).fill(0)
-    const rowHeights = new Array<number>(rows).fill(0)
-
-    children.forEach((_c, index) => {
-      const col = index % cols
-      const row = Math.floor(index / cols)
-      const cs = childSizes[index]
-      colWidths[col] = Math.max(colWidths[col], cs.width)
-      rowHeights[row] = Math.max(rowHeights[row], cs.height)
-    })
-
+    // Todos os sub-nós (axiomas, definições, teoremas) são dispostos LADO A LADO na horizontal
     const totalW =
       PADDING * 2 +
-      colWidths.reduce((sum, w) => sum + w, 0) +
-      Math.max(0, cols - 1) * GAP
-    const totalH =
-      HEADER_HEIGHT +
-      PADDING * 2 +
-      rowHeights.reduce((sum, h) => sum + h, 0) +
-      Math.max(0, rows - 1) * GAP
+      childSizes.reduce((sum, cs) => sum + cs.width, 0) +
+      Math.max(0, children.length - 1) * GAP
+
+    const maxHeight = Math.max(...childSizes.map((cs) => cs.height))
+    const totalH = HEADER_HEIGHT + PADDING * 2 + maxHeight
 
     const containerSize = {
       width: Math.max(LEAF_WIDTH, totalW),
@@ -94,7 +181,7 @@ export function buildFlowElements(
 ): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
   const { focusId, selectedId, dropTargetId = null, activeTag = null, lodLevel = 'standard' } = options
   const isMacro = lodLevel === 'macro'
-  const sizes = computeNodeSizes(nodes, focusId, isMacro)
+  const sizes = computeNodeSizes(nodes, edges, focusId, isMacro)
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
   // 1. Identificar nós visíveis
@@ -172,39 +259,17 @@ export function buildFlowElements(
   const childPositions = new Map<string, Position>()
 
   for (const parent of orderedNodes) {
-    const children = visibleNodes.filter((c) => c.parentId === parent.id)
-    const isParentCollapsed = parent.id === focusId ? false : Boolean(parent.data.collapsed)
-    if (children.length === 0 || isParentCollapsed) continue
+    const rawChildren = visibleNodes.filter((c) => c.parentId === parent.id)
+    const isParentCollapsed = parent.id === focusId ? false : (isMacro ? true : Boolean(parent.data.collapsed))
+    if (rawChildren.length === 0 || isParentCollapsed) continue
 
-    const k = children.length
-    const cols = Math.min(k, Math.max(1, Math.ceil(Math.sqrt(k))))
-    const rows = Math.ceil(k / cols)
+    const children = orderChildrenHorizontal(rawChildren, edges)
+    let currentX = PADDING
 
-    const colWidths = new Array<number>(cols).fill(0)
-    const rowHeights = new Array<number>(rows).fill(0)
-
-    children.forEach((c, index) => {
-      const col = index % cols
-      const row = Math.floor(index / cols)
+    children.forEach((c) => {
       const cs = sizes.get(c.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
-      colWidths[col] = Math.max(colWidths[col], cs.width)
-      rowHeights[row] = Math.max(rowHeights[row], cs.height)
-    })
-
-    const colOffsets: number[] = [PADDING]
-    for (let c = 0; c < cols - 1; c++) {
-      colOffsets.push(colOffsets[c] + colWidths[c] + GAP)
-    }
-
-    const rowOffsets: number[] = [HEADER_HEIGHT + PADDING]
-    for (let r = 0; r < rows - 1; r++) {
-      rowOffsets.push(rowOffsets[r] + rowHeights[r] + GAP)
-    }
-
-    children.forEach((c, index) => {
-      const col = index % cols
-      const row = Math.floor(index / cols)
-      childPositions.set(c.id, { x: colOffsets[col], y: rowOffsets[row] })
+      childPositions.set(c.id, { x: currentX, y: HEADER_HEIGHT + PADDING })
+      currentX += cs.width + GAP
     })
   }
 
@@ -228,7 +293,8 @@ export function buildFlowElements(
       parentIdProp = n.parentId!
     }
 
-    const directChildren = nodes.filter((c) => c.parentId === n.id)
+    const rawDirectChildren = nodes.filter((c) => c.parentId === n.id)
+    const directChildren = orderChildrenHorizontal(rawDirectChildren, edges)
     const childrenCount = directChildren.length
     const childrenSummary: ChildNodeSummary[] = directChildren.map((c) => ({
       id: c.id,
@@ -491,37 +557,19 @@ export function applyDagreLayout(
   }
 
   // Se não houver arestas conectando as raízes (ex: compêndios independentes),
-  // organiza em grid equilibrado de 2 colunas para telas widescreen em vez de empilhar tudo numa única coluna vertical
+  // organiza em trilha de conhecimento contínua da esquerda para a direita (LR)
   if (addedEdges.size === 0 && roots.length > 1) {
     const GAP_X = 120
-    const GAP_Y = 100
     const START_X = 80
     const START_Y = 80
 
-    let y0 = START_Y
-    let y1 = START_Y
-
-    let maxCol0Width = 0
-    roots.forEach((r, idx) => {
-      if (idx % 2 === 0) {
-        const s = sizes.get(r.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
-        maxCol0Width = Math.max(maxCol0Width, s.width)
-      }
-    })
-
+    let currentX = START_X
     const rootPositions = new Map<string, Position>()
-    roots.forEach((r, idx) => {
-      const isCol1 = idx % 2 === 1
-      const x = isCol1 ? START_X + maxCol0Width + GAP_X : START_X
-      const y = isCol1 ? y1 : y0
-      const s = sizes.get(r.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
 
-      rootPositions.set(r.id, { x, y })
-      if (isCol1) {
-        y1 += s.height + GAP_Y
-      } else {
-        y0 += s.height + GAP_Y
-      }
+    roots.forEach((r) => {
+      const s = sizes.get(r.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+      rootPositions.set(r.id, { x: currentX, y: START_Y })
+      currentX += s.width + GAP_X
     })
 
     return nodes.map((node) => {
