@@ -16,7 +16,7 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
     })
   })
 
-  it('deve renderizar nó no nível padrão com visual limpo (título em destaque, tags e botão de sub-nó, sem conteúdo textual ruidoso)', () => {
+  it('deve renderizar nó no nível padrão com visual limpo (título em destaque e botão de sub-nó, sem tags escritas ou conteúdo textual ruidoso)', () => {
     const nodeProps = {
       id: 'node-1',
       data: {
@@ -49,9 +49,10 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
       </ReactFlowProvider>
     )
 
-    // Título, tags e ações presentes
+    // Título e ação presentes; tags e conteúdo descritivo não aparecem no mapa para manter o grafo limpo
     expect(screen.getByText('Álgebra Linear')).toBeInTheDocument()
-    expect(screen.getByText('#algebra')).toBeInTheDocument()
+    expect(screen.queryByText('#algebra')).not.toBeInTheDocument()
+    expect(screen.queryByText('#matematica')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sub/i })).toBeInTheDocument()
 
     // Conteúdo textual omitido para evitar poluição visual em qualquer distância
@@ -92,7 +93,7 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
     )
 
     expect(screen.getByText('Topologia Geral')).toBeInTheDocument()
-    expect(screen.getByText('#topologia')).toBeInTheDocument()
+    expect(screen.queryByText('#topologia')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sub/i })).toBeInTheDocument()
 
     // O conteúdo descritivo não aparece nesse nível de zoom

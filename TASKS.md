@@ -105,6 +105,11 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - Removido o badge de página (`p.X` / clipe) dos cartões de nós no canvas ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)), garantindo que a tipografia do título permaneça limpa, espaçosa e sem ruído visual no grafo.
   - Informações de anexo, número de página de referência e leitor embutido mantidos de forma rica e organizada no painel do Inspetor ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)).
   - Teste de regressão adicionado em [CompoundNode.test.tsx](file:///home/kchima/repos/epistemap/src/components/__tests__/CompoundNode.test.tsx) (161 testes aprovados no total).
+- [x] **Fase 17 - Remoção das Tags Escritas nos Cartões do Mapa**:
+  - Removida a renderização de tags textuais (`#tag`) do rodapé dos cartões de nós no canvas ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)), preservando a estética minimalista e focada exclusivamente no título e na hierarquia visual do grafo.
+  - O botão de ação rápida `+ Sub` foi posicionado de forma limpa à direita no rodapé (no modo de edição).
+  - Gerenciamento completo, edição e filtragem de tags preservados no Inspetor de Conhecimento ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)), na busca global (`Cmd+K`) e no filtro da barra superior ([BreadcrumbsBar.tsx](file:///home/kchima/repos/epistemap/src/components/BreadcrumbsBar.tsx)).
+  - Testes em [CompoundNode.test.tsx](file:///home/kchima/repos/epistemap/src/components/__tests__/CompoundNode.test.tsx) atualizados (161 testes aprovados, 0 erros no Oxlint).
 
 ### [/] Em Andamento
 

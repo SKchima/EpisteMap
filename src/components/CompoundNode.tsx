@@ -377,36 +377,9 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
             <div style={{ flex: 1 }} />
           )}
 
-          {/* Tags e botão de adicionar sub-objeto */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-            <div
-              style={{
-                display: 'flex',
-                gap: '4px',
-                overflow: 'hidden',
-                maxWidth: '130px',
-              }}
-            >
-              {nodeData.tags &&
-                nodeData.tags.slice(0, 2).map((tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      fontSize: '9px',
-                      background: isHighContrast ? '#ffffff' : isLight ? '#f1f5f9' : '#242a3a',
-                      border: isHighContrast ? '1px solid #000000' : 'none',
-                      color: isHighContrast ? '#000000' : isLight ? '#475569' : '#94a3b8',
-                      padding: '1px 4px',
-                      borderRadius: '3px',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    #{tag}
-                  </span>
-                ))}
-            </div>
-
-            {!isViewMode && (
+          {/* Botão de adicionar sub-objeto no rodapé (apenas no modo de edição) */}
+          {!isViewMode && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 'auto' }}>
               <button
                 type="button"
                 onClick={handleAddSubNode}
@@ -426,8 +399,8 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
               >
                 <Plus size={10} /> Sub
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
