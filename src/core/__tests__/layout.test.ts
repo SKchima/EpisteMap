@@ -95,6 +95,27 @@ describe('layout determinístico de contêineres', () => {
     expect(subFlow.position).toEqual({ x: 0, y: 0 })
   })
 
+  it('no modo drill-down focado, o nó focado expande automaticamente mesmo se estiver colapsado', () => {
+    const nodes = [
+      makeNode('root'),
+      makeNode('sec', 'root', { collapsed: true }),
+      makeNode('def1', 'sec'),
+      makeNode('def2', 'sec'),
+    ]
+
+    const overview = buildFlowElements(nodes, [], { focusId: null, selectedId: null })
+    expect(overview.flowNodes.map((n) => n.id)).toEqual(['root', 'sec'])
+    expect(overview.flowNodes.find((n) => n.id === 'sec')?.data.collapsed).toBe(true)
+
+    const drill = buildFlowElements(nodes, [], { focusId: 'sec', selectedId: null })
+    expect(drill.flowNodes.map((n) => n.id)).toEqual(['sec', 'def1', 'def2'])
+    const secFlow = drill.flowNodes.find((n) => n.id === 'sec')!
+    expect(secFlow.data.collapsed).toBe(false)
+    expect(secFlow.data.isContainer).toBe(true)
+    expect(secFlow.parentId).toBeUndefined()
+    expect(secFlow.position).toEqual({ x: 0, y: 0 })
+  })
+
   it('eleva arestas para o nó visível quando o destino estiver dentro de nó colapsado', () => {
     const nodes = [
       makeNode('rootA'),
@@ -182,5 +203,27 @@ describe('distribuição espacial e auto-layout Dagre', () => {
     // Devem ter coordenadas distintas espalhadas horizontalmente (LR) ou verticalmente
     expect(posA.x).not.toBe(posB.x)
     expect(posB.x).not.toBe(posC.x)
+  })
+
+  it('applyDagreLayout distribui raízes desconexas em grade de 2 colunas', () => {
+    const nodes = [
+      makeNode('r1'),
+      makeNode('r2'),
+      makeNode('r3'),
+      makeNode('r4'),
+    ]
+
+    const layouted = applyDagreLayout(nodes, [])
+    const p1 = layouted.find((n) => n.id === 'r1')!.position
+    const p2 = layouted.find((n) => n.id === 'r2')!.position
+    const p3 = layouted.find((n) => n.id === 'r3')!.position
+    const p4 = layouted.find((n) => n.id === 'r4')!.position
+
+    // r1 e r3 na coluna 0, r2 e r4 na coluna 1
+    expect(p1.x).toBe(p3.x)
+    expect(p2.x).toBe(p4.x)
+    expect(p1.x).not.toBe(p2.x)
+    expect(p3.y).toBeGreaterThan(p1.y)
+    expect(p4.y).toBeGreaterThan(p2.y)
   })
 })

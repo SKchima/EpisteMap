@@ -11,7 +11,10 @@ export const GAP = 16
 
 export type NodeSize = { width: number; height: number }
 
-export function computeNodeSizes(nodes: KnowledgeNode[]): Map<string, NodeSize> {
+export function computeNodeSizes(
+  nodes: KnowledgeNode[],
+  focusId: string | null = null
+): Map<string, NodeSize> {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
   const sizeMap = new Map<string, NodeSize>()
 
@@ -24,7 +27,8 @@ export function computeNodeSizes(nodes: KnowledgeNode[]): Map<string, NodeSize> 
     if (!node) return { width: LEAF_WIDTH, height: LEAF_HEIGHT }
 
     const children = nodes.filter((n) => n.parentId === nodeId)
-    if (children.length === 0 || node.data.collapsed) {
+    const isNodeCollapsed = nodeId === focusId ? false : Boolean(node.data.collapsed)
+    if (children.length === 0 || isNodeCollapsed) {
       const leaf = { width: LEAF_WIDTH, height: LEAF_HEIGHT }
       sizeMap.set(nodeId, leaf)
       return leaf
@@ -35,15 +39,26 @@ export function computeNodeSizes(nodes: KnowledgeNode[]): Map<string, NodeSize> 
     const cols = Math.min(k, Math.max(1, Math.ceil(Math.sqrt(k))))
     const rows = Math.ceil(k / cols)
 
-    let maxColW = 0
-    let maxRowH = 0
-    for (const s of childSizes) {
-      maxColW = Math.max(maxColW, s.width)
-      maxRowH = Math.max(maxRowH, s.height)
-    }
+    const colWidths = new Array<number>(cols).fill(0)
+    const rowHeights = new Array<number>(rows).fill(0)
 
-    const totalW = PADDING * 2 + cols * maxColW + (cols - 1) * GAP
-    const totalH = HEADER_HEIGHT + PADDING * 2 + rows * maxRowH + (rows - 1) * GAP
+    children.forEach((_c, index) => {
+      const col = index % cols
+      const row = Math.floor(index / cols)
+      const cs = childSizes[index]
+      colWidths[col] = Math.max(colWidths[col], cs.width)
+      rowHeights[row] = Math.max(rowHeights[row], cs.height)
+    })
+
+    const totalW =
+      PADDING * 2 +
+      colWidths.reduce((sum, w) => sum + w, 0) +
+      Math.max(0, cols - 1) * GAP
+    const totalH =
+      HEADER_HEIGHT +
+      PADDING * 2 +
+      rowHeights.reduce((sum, h) => sum + h, 0) +
+      Math.max(0, rows - 1) * GAP
 
     const containerSize = {
       width: Math.max(LEAF_WIDTH, totalW),
@@ -74,7 +89,7 @@ export function buildFlowElements(
   options: BuildFlowOptions
 ): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
   const { focusId, selectedId, dropTargetId = null, activeTag = null } = options
-  const sizes = computeNodeSizes(nodes)
+  const sizes = computeNodeSizes(nodes, focusId)
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
   // 1. Identificar nós visíveis
@@ -103,7 +118,7 @@ export function buildFlowElements(
         for (const n of nodes) {
           if (n.parentId && allowed.has(n.parentId) && !allowed.has(n.id)) {
             const parent = nodeMap.get(n.parentId)
-            if (parent && !parent.data.collapsed) {
+            if (parent && (parent.id === focusId || !parent.data.collapsed)) {
               allowed.add(n.id)
               added = true
             }
@@ -149,25 +164,38 @@ export function buildFlowElements(
 
   for (const parent of orderedNodes) {
     const children = visibleNodes.filter((c) => c.parentId === parent.id)
-    if (children.length === 0 || parent.data.collapsed) continue
+    const isParentCollapsed = parent.id === focusId ? false : Boolean(parent.data.collapsed)
+    if (children.length === 0 || isParentCollapsed) continue
 
     const k = children.length
     const cols = Math.min(k, Math.max(1, Math.ceil(Math.sqrt(k))))
+    const rows = Math.ceil(k / cols)
 
-    let maxColW = 0
-    let maxRowH = 0
-    for (const c of children) {
+    const colWidths = new Array<number>(cols).fill(0)
+    const rowHeights = new Array<number>(rows).fill(0)
+
+    children.forEach((c, index) => {
+      const col = index % cols
+      const row = Math.floor(index / cols)
       const cs = sizes.get(c.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
-      maxColW = Math.max(maxColW, cs.width)
-      maxRowH = Math.max(maxRowH, cs.height)
+      colWidths[col] = Math.max(colWidths[col], cs.width)
+      rowHeights[row] = Math.max(rowHeights[row], cs.height)
+    })
+
+    const colOffsets: number[] = [PADDING]
+    for (let c = 0; c < cols - 1; c++) {
+      colOffsets.push(colOffsets[c] + colWidths[c] + GAP)
+    }
+
+    const rowOffsets: number[] = [HEADER_HEIGHT + PADDING]
+    for (let r = 0; r < rows - 1; r++) {
+      rowOffsets.push(rowOffsets[r] + rowHeights[r] + GAP)
     }
 
     children.forEach((c, index) => {
       const col = index % cols
       const row = Math.floor(index / cols)
-      const relX = PADDING + col * (maxColW + GAP)
-      const relY = HEADER_HEIGHT + PADDING + row * (maxRowH + GAP)
-      childPositions.set(c.id, { x: relX, y: relY })
+      childPositions.set(c.id, { x: colOffsets[col], y: rowOffsets[row] })
     })
   }
 
@@ -175,6 +203,7 @@ export function buildFlowElements(
     const size = sizes.get(n.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
     const isDrillRoot = focusId !== null && n.id === focusId
     const isRoot = isDrillRoot || !n.parentId || !visibleIdSet.has(n.parentId)
+    const isNodeCollapsed = isDrillRoot ? false : Boolean(n.data.collapsed)
 
     let pos: Position = { x: 0, y: 0 }
     let parentIdProp: string | undefined = undefined
@@ -218,10 +247,10 @@ export function buildFlowElements(
         title: n.data.title,
         description: n.data.description,
         tags: n.data.tags,
-        collapsed: n.data.collapsed,
+        collapsed: isNodeCollapsed,
         color,
         childCount: childrenCount,
-        isContainer: childrenCount > 0 && !n.data.collapsed,
+        isContainer: childrenCount > 0 && !isNodeCollapsed,
         isDropTarget: dropTargetId === n.id,
         isDimmed,
         pdfAttachment: n.data.pdfAttachment,
@@ -442,6 +471,47 @@ export function applyDagreLayout(
         g.setEdge(srcRoot, tgtRoot)
       }
     }
+  }
+
+  // Se não houver arestas conectando as raízes (ex: compêndios independentes),
+  // organiza em grid equilibrado de 2 colunas para telas widescreen em vez de empilhar tudo numa única coluna vertical
+  if (addedEdges.size === 0 && roots.length > 1) {
+    const GAP_X = 120
+    const GAP_Y = 100
+    const START_X = 80
+    const START_Y = 80
+
+    let y0 = START_Y
+    let y1 = START_Y
+
+    let maxCol0Width = 0
+    roots.forEach((r, idx) => {
+      if (idx % 2 === 0) {
+        const s = sizes.get(r.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+        maxCol0Width = Math.max(maxCol0Width, s.width)
+      }
+    })
+
+    const rootPositions = new Map<string, Position>()
+    roots.forEach((r, idx) => {
+      const isCol1 = idx % 2 === 1
+      const x = isCol1 ? START_X + maxCol0Width + GAP_X : START_X
+      const y = isCol1 ? y1 : y0
+      const s = sizes.get(r.id) || { width: LEAF_WIDTH, height: LEAF_HEIGHT }
+
+      rootPositions.set(r.id, { x, y })
+      if (isCol1) {
+        y1 += s.height + GAP_Y
+      } else {
+        y0 += s.height + GAP_Y
+      }
+    })
+
+    return nodes.map((node) => {
+      if (node.parentId !== null) return node
+      const pos = rootPositions.get(node.id)
+      return pos ? { ...node, position: pos } : node
+    })
   }
 
   dagre.layout(g)

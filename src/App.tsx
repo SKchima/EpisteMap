@@ -162,13 +162,17 @@ const EpistemapCanvas: React.FC = () => {
     })
   }, [])
 
+  const prevFocusRef = useRef<string | null>(focusId)
+
   // Ajusta visão da câmera ao alternar foco/drill-down
   useEffect(() => {
     const isSubtree = Boolean(focusId)
+    prevFocusRef.current = focusId
+
     focusFitViewTimerRef.current = setTimeout(() => {
       focusFitViewTimerRef.current = null
-      fitView({ padding: isSubtree ? 0.3 : 0.25, duration: 300 })
-    }, 60)
+      fitView({ padding: isSubtree ? 0.3 : 0.25, duration: 250 })
+    }, 40)
     return () => {
       if (focusFitViewTimerRef.current) {
         clearTimeout(focusFitViewTimerRef.current)
@@ -516,6 +520,7 @@ const EpistemapCanvas: React.FC = () => {
           onDoubleClick={handleDoubleClick}
         >
           <ReactFlow
+            key={focusId ?? 'overview'}
             nodes={renderedFlowNodes}
             edges={flowEdges}
             nodeTypes={nodeTypes}
@@ -532,7 +537,7 @@ const EpistemapCanvas: React.FC = () => {
             zoomOnDoubleClick={false}
             deleteKeyCode={null}
             fitView
-            fitViewOptions={{ padding: 0.2 }}
+            fitViewOptions={{ padding: focusId ? 0.3 : 0.25 }}
             colorMode={theme === 'dark' ? 'dark' : 'light'}
             style={{ backgroundColor: canvasBg }}
           >

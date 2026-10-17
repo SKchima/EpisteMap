@@ -1004,18 +1004,42 @@ function runCli() {
         : loadVault()
 
       console.log(`Encontrados ${projects.length} compêndios em ${rootDir}:`)
-      projects.forEach((projDir, idx) => {
-        const result = indexLatexProject(projDir, {
+      const results = projects.map((projDir, idx) => {
+        return indexLatexProject(projDir, {
           compile: Boolean(flags.compile),
           color: COMPENDIUM_COLORS[idx % COMPENDIUM_COLORS.length],
-          position: {
-            x: 80 + (idx % 2) * 920,
-            y: 80 + Math.floor(idx / 2) * 620,
-          },
         })
-        mergeCompendiumIntoVault(vault, result)
+      })
+
+      const GAP_X = 120
+      const GAP_Y = 100
+      const START_X = 80
+      const START_Y = 80
+
+      let y0 = START_Y
+      let y1 = START_Y
+      const col0Width = 1008
+
+      results.forEach((res, idx) => {
+        const isCol1 = idx % 2 === 1
+        const x = isCol1 ? START_X + col0Width + GAP_X : START_X
+        const y = isCol1 ? y1 : y0
+        res.nodes[0].position = { x, y }
+
+        const secCount = res.nodes.filter((n) => n.parentId === res.compSlug).length
+        const cols = Math.min(secCount, Math.max(1, Math.ceil(Math.sqrt(secCount || 1))))
+        const rows = Math.ceil((secCount || 1) / cols)
+        const estHeight = 44 + 32 + rows * 112 + Math.max(0, rows - 1) * 16
+
+        if (isCol1) {
+          y1 += estHeight + GAP_Y
+        } else {
+          y0 += estHeight + GAP_Y
+        }
+
+        mergeCompendiumIntoVault(vault, res)
         console.log(
-          `  [${idx + 1}/${projects.length}] ${result.disciplineTitle}: ${result.nodes.length} nós (PDF: ${result.pdfPath ? path.basename(result.pdfPath) : 'N/A'}, SyncTeX: ${result.hasSyncTex ? 'OK' : 'N/A'})`
+          `  [${idx + 1}/${projects.length}] ${res.disciplineTitle}: ${res.nodes.length} nós (PDF: ${res.pdfPath ? path.basename(res.pdfPath) : 'N/A'}, SyncTeX: ${res.hasSyncTex ? 'OK' : 'N/A'})`
         )
       })
 
