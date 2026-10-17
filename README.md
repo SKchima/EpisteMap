@@ -43,10 +43,6 @@ EpisteMap is an infinite canvas application for structuring academic notes, math
 - Embedded side-panel viewer with page navigation and zoom controls.
 - External reader option opens the PDF at the referenced page in system readers (e.g., Zathura via `#page=N`).
 
-### Search (Cmd+K)
-- Searches titles, tags, and content text.
-- Expands collapsed parent nodes and centers the viewport on the selected node.
-
 ### History and Backups
 - Undo / Redo: `Cmd+Z` / `Cmd+Shift+Z` via Zundo middleware with typing debounce.
 - Full backup (.json): exports graph data including embedded PDFs.
