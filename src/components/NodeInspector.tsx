@@ -650,29 +650,6 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
               <strong style={{ color: textColor }}>{edges.length}</strong>
             </div>
           </div>
-
-          <div style={{ background: sectionBg, border: sectionBorder, borderRadius: '6px', padding: '12px' }}>
-            <div style={{ fontWeight: 600, color: textColor, marginBottom: '8px', fontSize: '12px' }}>
-              Atalhos e Dicas
-            </div>
-            <ul style={{ paddingLeft: '16px', margin: 0, lineHeight: 1.65, fontSize: '12px' }}>
-              <li>
-                <code>⌘K</code> / <code>Ctrl+K</code>: Busca global inteligente com expansão automática.
-              </li>
-              <li>
-                <code>⌘Z</code> / <code>⌘⇧Z</code>: Desfazer e refazer alterações no grafo.
-              </li>
-              <li>
-                <code>Tab</code> / <code>Enter</code>: Criar sub-objeto ou conceito irmão.
-              </li>
-              <li>
-                Use <code>[[Novo Conceito]]</code> na descrição para criar links ou novos nós com 1 clique.
-              </li>
-              <li>
-                Fórmulas LaTeX: <code>$E=mc^2$</code> ou <code>$$\int f(x)dx$$</code>.
-              </li>
-            </ul>
-          </div>
         </div>
 
         <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center' }}>

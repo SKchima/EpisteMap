@@ -57,7 +57,7 @@ describe('Epistemap Backup & Snapshot Engine', () => {
     expect(exported.edges).toHaveLength(1)
   })
 
-  it('deve esvaziar o payload Base64 na exportação leve (perfeito para git em ygg)', () => {
+  it('deve esvaziar o payload Base64 na exportação leve (ideal para versionamento git)', () => {
     const exported = prepareGraphForExport(mockNodes, mockEdges, { includePdfs: false })
     expect(exported.nodes[0].data.pdfAttachment?.name).toBe('shannon1948.pdf')
     expect(exported.nodes[0].data.pdfAttachment?.page).toBe(5)

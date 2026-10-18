@@ -80,12 +80,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
     showNotification(`Backup completo exportado: ${filename}`)
   }
 
-  // Backup Leve (sem Base64 de PDFs, perfeito para repositório git ygg)
+  // Backup Leve (sem Base64 de PDFs, ideal para versionamento git)
   const handleExportLight = () => {
     const filename = createBackupFilename('epistemap-backup', false)
     const data = prepareGraphForExport(nodes, edges, { includePdfs: false })
     downloadJsonFile(filename, data)
-    showNotification(`Backup leve exportado (ideal para git no ygg): ${filename}`)
+    showNotification(`Backup leve exportado: ${filename}`)
   }
 
   // Criar Snapshot Local no navegador
@@ -415,7 +415,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                         <Download size={14} color="#38bdf8" /> Backup Leve (.json)
                       </div>
                       <div style={{ fontSize: '11px', color: subtextColor, lineHeight: 1.4, marginBottom: '12px' }}>
-                        Ideal para <strong>versionar no seu repositório git (ex: ygg)</strong>. Inclui todos os nós, links, equações LaTeX e referências, mas omite o Base64 pesado dos PDFs (&lt; 50 KB).
+                        Ideal para <strong>versionamento em repositórios Git</strong>. Inclui todos os nós, conexões, equações LaTeX e metadados, mantendo tamanho reduzido (&lt; 50 KB).
                       </div>
                     </div>
                     <button
@@ -659,7 +659,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                     {
                       id: 'high-contrast' as ThemeMode,
                       title: 'Alto Contraste Papel / Impresso',
-                      desc: 'Branco puro (#ffffff), bordas pretas sólidas (2px #000) e texto em preto absoluto (WCAG AAA). Ideal para compêndios acadêmicos e exportação de diagramas para relatórios LaTeX.',
+                      desc: 'Branco puro (#ffffff), bordas pretas sólidas (2px #000) e texto em preto absoluto (WCAG AAA). Ideal para impressões, artigos acadêmicos e exportação de diagramas para relatórios LaTeX.',
                       previewBg: '#ffffff',
                       previewBorder: '#000000',
                       previewText: '#000000',
@@ -778,6 +778,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                             Criar novo conceito raiz nas coordenadas do cursor
                           </td>
                         </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>M</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Alternar exibição do minimapa flutuante (radar)
+                          </td>
+                        </tr>
+                        <tr style={{ borderBottom: `1px solid ${isPaper ? '#e5e7eb' : '#232a3d'}` }}>
+                          <td style={{ padding: '6px 0' }}>
+                            <kbd style={kbdStyle}>←</kbd> / <kbd style={kbdStyle}>→</kbd>
+                          </td>
+                          <td style={{ padding: '6px 0', color: subtextColor }}>
+                            Navegar pelo passo anterior ou próximo no Modo Apresentação (Tour)
+                          </td>
+                        </tr>
                         <tr>
                           <td style={{ padding: '6px 0' }}>
                             <kbd style={kbdStyle}>?</kbd>
@@ -885,16 +901,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
 
                 <div style={{ background: cardBg, border: borderRule, borderRadius: isPaper ? '0' : '8px', padding: '14px' }}>
                   <div style={{ fontWeight: 600, fontSize: '12px', marginBottom: '6px' }}>
-                    Separação: Código no GitHub vs Mapas Pessoais no YGG
+                    Separação: Código-Fonte vs Dados e Mapas Pessoais
                   </div>
                   <div style={{ fontSize: '11px', color: subtextColor, lineHeight: 1.6 }}>
                     <p style={{ margin: '0 0 8px 0' }}>
-                      <strong>Como manter seu repositório de dev pronto para o GitHub sem vazar dados pessoais:</strong>
+                      <strong>Arquitetura local-first e privacidade dos seus dados:</strong>
                     </p>
                     <ol style={{ margin: 0, paddingLeft: '18px' }}>
-                      <li>O repositório <code>epistemap</code> contém <strong>apenas software e testes automatizados</strong>. Nenhum mapa pessoal é gravado dentro da pasta git por padrão.</li>
-                      <li>Para sincronizar seus mapas de estudo de forma privada, exporte o <strong>Backup Leve (.json)</strong> e guarde-o no seu repositório pessoal <code>~/repos/ygg/</code>.</li>
-                      <li>Os testes do repositório (<code>vitest</code>) usam dados sintéticos de matemática/ciência e <strong>devem permanecer públicos no GitHub</strong> para demonstrar que o projeto é testado e confiável.</li>
+                      <li>O repositório do EpisteMap contém <strong>apenas o código da aplicação e testes automatizados</strong>. Nenhum mapa pessoal é gravado dentro do código-fonte.</li>
+                      <li>Para versionar ou sincronizar seus mapas de estudo de forma privada, exporte o <strong>Backup Leve (.json)</strong> para uma pasta ou repositório de sua preferência, ou conecte um diretório local seguro via vault.</li>
+                      <li>Os testes automatizados utilizam exclusivamente dados sintéticos e abstratos para validação da integridade de software.</li>
                     </ol>
                   </div>
                 </div>

@@ -56,6 +56,22 @@ describe('SettingsModal Component', () => {
     expect(screen.getByText(/zero cloud & zero tracking/i)).toBeInTheDocument()
   })
 
+  it('deve permitir alternar o tema visual exclusivamente pelo modal de configurações', () => {
+    render(<SettingsModal isOpen={true} onClose={vi.fn()} />)
+    const themeTabBtn = screen.getByRole('button', { name: /temas & visual/i })
+    fireEvent.click(themeTabBtn)
+
+    expect(screen.getByText(/tema escuro \(padrão\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/tema claro/i)).toBeInTheDocument()
+    expect(screen.getByText(/alto contraste papel \/ impresso/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText(/tema claro/i))
+    expect(useGraphStore.getState().theme).toBe('light')
+
+    fireEvent.click(screen.getByText(/alto contraste papel \/ impresso/i))
+    expect(useGraphStore.getState().theme).toBe('high-contrast')
+  })
+
   it('deve fechar ao pressionar a tecla Escape', () => {
     const onClose = vi.fn()
     render(<SettingsModal isOpen={true} onClose={onClose} />)

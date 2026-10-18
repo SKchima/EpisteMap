@@ -10,13 +10,8 @@ import {
   Undo2,
   Redo2,
   Image as ImageIcon,
-  Moon,
-  Sun,
-  Contrast,
   FileCode,
   Settings,
-  PanelRightClose,
-  PanelRightOpen,
 } from 'lucide-react'
 import { getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
@@ -35,7 +30,6 @@ export interface BreadcrumbsBarProps {
 export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   onOpenSearch,
   onOpenSettings,
-  onOpenShortcuts,
 }) => {
   const { isConnected, isSyncing, vaultPath, forceReload } = useVaultSync()
   const focusId = useGraphStore((s) => s.focusId)
@@ -43,7 +37,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const edges = useGraphStore((s) => s.edges)
   const activeTag = useGraphStore((s) => s.activeTag)
   const theme = useGraphStore((s) => s.theme)
-  const setTheme = useGraphStore((s) => s.setTheme)
   const canUndo = useGraphStore((s) => s.canUndo)
   const canRedo = useGraphStore((s) => s.canRedo)
   const setFocus = useGraphStore((s) => s.setFocus)
@@ -54,8 +47,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const importBatch = useGraphStore((s) => s.importBatch)
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
-  const isInspectorOpen = useGraphStore((s) => s.isInspectorOpen)
-  const toggleInspector = useGraphStore((s) => s.toggleInspector)
   const editorMode = useGraphStore((s) => s.editorMode)
   const setEditorMode = useGraphStore((s) => s.setEditorMode)
   const isTourActive = useGraphStore((s) => s.isTourActive)
@@ -246,16 +237,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
 
   const isHighContrast = theme === 'high-contrast'
   const isLight = theme === 'light'
-
-  const handleToggleTheme = () => {
-    if (theme === 'dark') {
-      setTheme('light')
-    } else if (theme === 'light') {
-      setTheme('high-contrast')
-    } else {
-      setTheme('dark')
-    }
-  }
 
   const headerBg = isHighContrast ? '#ffffff' : isLight ? '#ffffff' : '#12151c'
   const headerBorder = isHighContrast ? '2px solid #000000' : isLight ? '1px solid #e2e8f0' : '1px solid #262b3a'
@@ -858,7 +839,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 500 }}>Importar .tex</div>
                       <div style={{ fontSize: '10px', color: itemDescColor }}>
-                        Documento ou compêndio LaTeX
+                        Documento LaTeX (.tex)
                       </div>
                     </div>
                   </button>
@@ -903,69 +884,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
         {/* Divisor Semântico */}
         <div style={{ width: '1px', height: '18px', backgroundColor: dividerColor }} />
 
-        {/* Seletor de Tema Visual (3 Modos: Escuro, Claro, Alto Contraste Papel) */}
-        <button
-          type="button"
-          onClick={handleToggleTheme}
-          title={`Tema: ${theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Alto Contraste Papel'}. Clique para alternar.`}
-          aria-label="Alternar tema visual"
-          data-testid="theme-toggle"
-          style={{
-            background: btnBg,
-            color: textColor,
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '11px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-          }}
-        >
-          {theme === 'dark' && <Moon size={13} color="#818cf8" />}
-          {theme === 'light' && <Sun size={13} color="#f59e0b" />}
-          {theme === 'high-contrast' && <Contrast size={13} color="#000000" />}
-          <span style={{ fontSize: '11px', fontWeight: 500 }}>
-            {theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Papel'}
-          </span>
-        </button>
-
-        {onOpenShortcuts && (
-          <button
-            type="button"
-            onClick={onOpenShortcuts}
-            title="Atalhos de Teclado (?)"
-            style={{
-              background: btnBg,
-              color: textColor,
-              border: btnBorder,
-              borderRadius: '5px',
-              padding: '5px 8px',
-              fontSize: '12px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <span style={{ fontSize: '11px', fontWeight: 500 }}>Atalhos</span>
-            <kbd
-              style={{
-                fontSize: '10px',
-                background: isHighContrast ? '#ffffff' : isLight ? '#e2e8f0' : '#252b3d',
-                color: textColor,
-                padding: '0 3px',
-                borderRadius: '3px',
-                border: btnBorder,
-                marginLeft: '1px',
-              }}
-            >
-              ?
-            </kbd>
-          </button>
-        )}
-
         {isConnected && (
           <button
             type="button"
@@ -997,42 +915,6 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             <span style={{ fontWeight: 500 }}>{isSyncing ? 'Sync...' : 'Vault'}</span>
           </button>
         )}
-
-        <button
-          type="button"
-          onClick={toggleInspector}
-          title={isInspectorOpen ? 'Recolher Inspetor de Conhecimento (Ctrl+\\)' : 'Expandir Inspetor de Conhecimento (Ctrl+\\)'}
-          aria-label={isInspectorOpen ? 'Recolher inspetor lateral' : 'Expandir inspetor lateral'}
-          data-testid="toggle-inspector"
-          style={{
-            background: isInspectorOpen
-              ? (isHighContrast ? '#000000' : isLight ? '#e2e8f0' : '#283144')
-              : btnBg,
-            color: isInspectorOpen && isHighContrast ? '#ffffff' : textColor,
-            border: btnBorder,
-            borderRadius: '5px',
-            padding: '5px 8px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            transition: 'background-color 0.15s ease',
-          }}
-        >
-          {isInspectorOpen ? (
-            <PanelRightClose
-              size={13}
-              color={isHighContrast ? (isInspectorOpen ? '#ffffff' : '#000000') : '#818cf8'}
-            />
-          ) : (
-            <PanelRightOpen
-              size={13}
-              color={isHighContrast ? '#000000' : '#94a3b8'}
-            />
-          )}
-          <span style={{ fontSize: '11px', fontWeight: 500 }}>Inspetor</span>
-        </button>
 
         {onOpenSettings && (
           <button

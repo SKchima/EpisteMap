@@ -132,6 +132,16 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - **Remoção Completa do Indicador de Páginas no Mapa e no Inspetor**:
     - Eliminado o texto `(p.X)` do botão de aba do leitor PDF e removido o seletor redundante de página no resumo do cartão de anexo ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)), mantendo o controle de páginas estritamente confinado ao visualizador de PDF ([PdfViewerPanel.tsx](file:///home/kchima/repos/epistemap/src/components/PdfViewerPanel.tsx)).
   - Suíte de 175 testes automatizados aprovada (15 arquivos) e 0 erros no Oxlint.
+- [x] **Fase 19 - Unificação de Pontos de Acesso da UI & Higienização de Configurações**:
+  - **Despersonalização de Configurações**:
+    - Removidas todas as menções a repositórios pessoais (`ygg`, caminhos de pastas específicas e compêndios) em [SettingsModal.tsx](file:///home/kchima/repos/epistemap/src/components/SettingsModal.tsx) e [backup.test.ts](file:///home/kchima/repos/epistemap/src/core/__tests__/backup.test.ts).
+    - Textos de exportação de backup e diagnósticos de privacidade convertidos para arquitetura genérica local-first e boas práticas de versionamento Git.
+    - Descrição da importação TeX em [BreadcrumbsBar.tsx](file:///home/kchima/repos/epistemap/src/components/BreadcrumbsBar.tsx) atualizada para `Documento LaTeX (.tex)`.
+  - **Centralização Estrita de Recursos (Single Source of Truth na UI)**:
+    - **Tema Visual**: Seletor de tema removido da barra superior do canvas e centralizado exclusivamente na aba "Temas & Visual" do modal de Configurações (`SettingsModal.tsx`).
+    - **Atalhos de Teclado**: Bloco redundante "Atalhos e Dicas" removido da visualização vazia do Inspetor lateral ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)) e botão avulso removido do topo, mantendo a aba "Atalhos de Teclado" nas Configurações como o único local de consulta, também acessível pelo atalho `?` / `Cmd+,`.
+    - **Inspetor de Conhecimento**: Botão redundante "Inspetor" removido da barra superior ([BreadcrumbsBar.tsx](file:///home/kchima/repos/epistemap/src/components/BreadcrumbsBar.tsx)). O painel lateral é controlado unicamente por sua própria borda/dock rail lateral, pelo botão de recolher interno (`PanelRightClose`) e pelo atalho global `Ctrl+\` / `Cmd+\`.
+  - Suíte de 176 testes automatizados aprovada (15 arquivos) e 0 erros no Oxlint.
 
 ### [/] Em Andamento
 

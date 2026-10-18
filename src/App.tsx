@@ -568,10 +568,6 @@ const EpistemapCanvas: React.FC = () => {
           setSettingsTab('backup')
           setIsSettingsOpen(true)
         }}
-        onOpenShortcuts={() => {
-          setSettingsTab('shortcuts')
-          setIsSettingsOpen(true)
-        }}
       />
 
       <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>

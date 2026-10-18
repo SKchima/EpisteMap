@@ -75,24 +75,12 @@ describe('BreadcrumbsBar (Barra Superior de Navegação, Tags, Histórico e Expo
     viewportDiv.remove()
   })
 
-  it('deve alternar ciclicamente entre os 3 temas visuais ao clicar no botão de tema', () => {
+  it('não deve conter controles duplicados de tema, atalhos ou inspetor na barra superior', () => {
     render(<BreadcrumbsBar />)
 
-    const toggleBtn = screen.getByTestId('theme-toggle')
-    expect(toggleBtn).toHaveTextContent('Escuro')
-    expect(useGraphStore.getState().theme).toBe('dark')
-
-    fireEvent.click(toggleBtn)
-    expect(toggleBtn).toHaveTextContent('Claro')
-    expect(useGraphStore.getState().theme).toBe('light')
-
-    fireEvent.click(toggleBtn)
-    expect(toggleBtn).toHaveTextContent('Papel')
-    expect(useGraphStore.getState().theme).toBe('high-contrast')
-
-    fireEvent.click(toggleBtn)
-    expect(toggleBtn).toHaveTextContent('Escuro')
-    expect(useGraphStore.getState().theme).toBe('dark')
+    expect(screen.queryByTestId('theme-toggle')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('toggle-inspector')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /atalhos/i })).not.toBeInTheDocument()
   })
 
   it('deve renderizar menu dropdown de arquivo com opções de importação e exportação', () => {
