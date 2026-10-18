@@ -213,8 +213,8 @@ export const PdfViewerPanel: React.FC<PdfViewerPanelProps> = ({
           <button
             type="button"
             onClick={handleOpenExternal}
-            title="Abrir no leitor de PDF externo (Zathura / Visualizador do Sistema)"
-            aria-label="Abrir externo no Zathura"
+            title="Abrir no leitor de PDF externo do sistema"
+            aria-label="Abrir no leitor de PDF externo"
             style={{
               background: btnBg,
               border: btnBorder,
@@ -230,7 +230,7 @@ export const PdfViewerPanel: React.FC<PdfViewerPanelProps> = ({
             }}
           >
             <ExternalLink size={12} />
-            <span>Zathura</span>
+            <span>Leitor Externo</span>
           </button>
 
           <button

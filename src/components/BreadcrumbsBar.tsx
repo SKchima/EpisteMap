@@ -888,7 +888,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
           <button
             type="button"
             onClick={forceReload}
-            title={`Vault local sincronizado: ${vaultPath || '~/notes/epistemap/vault.json'}\nClique para forçar recarga do disco`}
+            title={`Cofre local sincronizado: ${vaultPath || '~/notes/epistemap/vault.json'}\nClique para forçar recarga do disco`}
             style={{
               background: btnBg,
               color: textColor,
@@ -912,7 +912,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
                 boxShadow: isSyncing ? '0 0 6px #eab308' : '0 0 6px #22c55e',
               }}
             />
-            <span style={{ fontWeight: 500 }}>{isSyncing ? 'Sync...' : 'Vault'}</span>
+            <span style={{ fontWeight: 500 }}>{isSyncing ? 'Sincronizando...' : 'Cofre Local'}</span>
           </button>
         )}
 

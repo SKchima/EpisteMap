@@ -868,7 +868,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
           <button
             type="button"
             onClick={handleDrillDown}
-            title="Drill-down (Focar neste nó)"
+            title="Focar neste conceito (modo aprofundado)"
             style={{
               background: btnBg,
               border: btnBorder,
@@ -1356,7 +1356,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                     <button
                       type="button"
                       onClick={handleOpenExternalPdf}
-                      title="Abrir no leitor de PDF do sistema (Zathura)"
+                      title="Abrir no leitor de PDF externo do sistema"
                       style={{
                         background: btnBg,
                         border: btnBorder,
@@ -1370,7 +1370,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                         gap: '4px',
                       }}
                     >
-                      <ExternalLink size={12} /> Zathura
+                      <ExternalLink size={12} /> Leitor Externo
                     </button>
 
                     {!isViewMode && (

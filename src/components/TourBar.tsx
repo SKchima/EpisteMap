@@ -117,7 +117,7 @@ export const TourBar: React.FC<TourBarProps> = ({ onStepChange }) => {
             color: isHighContrast ? '#000' : '#818cf8',
           }}
         >
-          Tour
+          Trilha
         </span>
       </div>
 
