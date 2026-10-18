@@ -191,6 +191,143 @@ export function getBacklinks(nodes: KnowledgeNode[], targetId: string): Knowledg
   })
 }
 
+export interface DagPathResult {
+  nodeIds: Set<string>
+  edgeIds: Set<string>
+}
+
+/**
+ * Retorna todos os nós e arestas que são pré-requisitos lógicos para o nó alvo (caminho reverso u -> ... -> targetId).
+ */
+export function getPrerequisiteSubgraph(
+  edges: KnowledgeEdge[],
+  targetNodeId: string
+): DagPathResult {
+  const nodeIds = new Set<string>([targetNodeId])
+  const edgeIds = new Set<string>()
+
+  // Mapeamento de arestas de entrada: target -> edges
+  const incomingMap = new Map<string, KnowledgeEdge[]>()
+  for (const e of edges) {
+    const list = incomingMap.get(e.target) || []
+    list.push(e)
+    incomingMap.set(e.target, list)
+  }
+
+  const queue: string[] = [targetNodeId]
+  while (queue.length > 0) {
+    const curr = queue.shift()!
+    const incoming = incomingMap.get(curr) || []
+    for (const edge of incoming) {
+      edgeIds.add(edge.id)
+      if (!nodeIds.has(edge.source)) {
+        nodeIds.add(edge.source)
+        queue.push(edge.source)
+      }
+    }
+  }
+
+  return { nodeIds, edgeIds }
+}
+
+/**
+ * Retorna todos os nós e arestas que são consequências lógicas a partir do nó de origem (caminho direto sourceId -> ... -> v).
+ */
+export function getConsequenceSubgraph(
+  edges: KnowledgeEdge[],
+  sourceNodeId: string
+): DagPathResult {
+  const nodeIds = new Set<string>([sourceNodeId])
+  const edgeIds = new Set<string>()
+
+  const outgoingMap = new Map<string, KnowledgeEdge[]>()
+  for (const e of edges) {
+    const list = outgoingMap.get(e.source) || []
+    list.push(e)
+    outgoingMap.set(e.source, list)
+  }
+
+  const queue: string[] = [sourceNodeId]
+  while (queue.length > 0) {
+    const curr = queue.shift()!
+    const outgoing = outgoingMap.get(curr) || []
+    for (const edge of outgoing) {
+      edgeIds.add(edge.id)
+      if (!nodeIds.has(edge.target)) {
+        nodeIds.add(edge.target)
+        queue.push(edge.target)
+      }
+    }
+  }
+
+  return { nodeIds, edgeIds }
+}
+
+/**
+ * Ordena os nós em ordem topológica e espacial para o Modo Tour / Apresentação Guiada.
+ */
+export function getTopologicalTourOrder(
+  nodes: KnowledgeNode[],
+  edges: KnowledgeEdge[]
+): KnowledgeNode[] {
+  if (nodes.length === 0) return []
+
+  const inDegree = new Map<string, number>()
+  const adj = new Map<string, string[]>()
+  const nodeMap = new Map<string, KnowledgeNode>()
+
+  for (const n of nodes) {
+    inDegree.set(n.id, 0)
+    adj.set(n.id, [])
+    nodeMap.set(n.id, n)
+  }
+
+  const validNodeIds = new Set(nodes.map((n) => n.id))
+
+  for (const e of edges) {
+    if (validNodeIds.has(e.source) && validNodeIds.has(e.target)) {
+      adj.get(e.source)?.push(e.target)
+      inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1)
+    }
+  }
+
+  // Fila inicial com inDegree 0, priorizando nós mais à esquerda (menor X)
+  const available: KnowledgeNode[] = nodes
+    .filter((n) => (inDegree.get(n.id) || 0) === 0)
+    .sort((a, b) => a.position.x - b.position.x)
+
+  const result: KnowledgeNode[] = []
+
+  while (available.length > 0) {
+    const current = available.shift()!
+    result.push(current)
+
+    const neighbors = adj.get(current.id) || []
+    for (const neighborId of neighbors) {
+      const newDeg = (inDegree.get(neighborId) || 0) - 1
+      inDegree.set(neighborId, newDeg)
+      if (newDeg === 0) {
+        const neighborNode = nodeMap.get(neighborId)
+        if (neighborNode) {
+          available.push(neighborNode)
+          available.sort((a, b) => a.position.x - b.position.x)
+        }
+      }
+    }
+  }
+
+  // Se houver ciclos ou nós restantes, inclui os restantes ordenados por X
+  if (result.length < nodes.length) {
+    const included = new Set(result.map((n) => n.id))
+    const remaining = nodes
+      .filter((n) => !included.has(n.id))
+      .sort((a, b) => a.position.x - b.position.x)
+    result.push(...remaining)
+  }
+
+  return result
+}
+
 export function sanitizeGraph(raw: unknown): Graph {
   if (!raw || typeof raw !== 'object' || !('nodes' in raw) || !Array.isArray((raw as { nodes: unknown }).nodes)) {
     throw new Error('Formato de grafo inválido: "nodes" deve ser um array.')

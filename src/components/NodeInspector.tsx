@@ -80,6 +80,8 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
   const isInspectorOpen = useGraphStore((s) => s.isInspectorOpen)
   const toggleInspector = useGraphStore((s) => s.toggleInspector)
   const editorMode = useGraphStore((s) => s.editorMode)
+  const prerequisiteTargetId = useGraphStore((s) => s.prerequisiteTargetId)
+  const togglePrerequisitesHighlight = useGraphStore((s) => s.togglePrerequisitesHighlight)
   const isViewMode = editorMode === 'view'
 
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview')
@@ -879,7 +881,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                 }}
               >
                 <FileText size={10} />
-                <span>PDF (p.{selectedNode.data.pdfAttachment.page || 1})</span>
+                <span>PDF</span>
               </button>
             </div>
           )}
@@ -905,6 +907,43 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
           >
             <Eye size={12} />
             Focar
+          </button>
+          <button
+            type="button"
+            onClick={() => togglePrerequisitesHighlight(selectedNode.id)}
+            title={
+              prerequisiteTargetId === selectedNode.id
+                ? 'Desativar destaque da trilha de pré-requisitos'
+                : 'Realçar cadeia de pré-requisitos lógicos (DAG) deste conceito no mapa'
+            }
+            aria-pressed={prerequisiteTargetId === selectedNode.id}
+            aria-label="Alternar destaque de pré-requisitos DAG"
+            style={{
+              background:
+                prerequisiteTargetId === selectedNode.id
+                  ? isHighContrast
+                    ? '#000000'
+                    : '#d97706'
+                  : btnBg,
+              border: btnBorder,
+              color:
+                prerequisiteTargetId === selectedNode.id
+                  ? '#ffffff'
+                  : isHighContrast
+                    ? '#000000'
+                    : '#f59e0b',
+              borderRadius: '4px',
+              padding: '4px 8px',
+              fontSize: '11px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <GitBranch size={12} />
+            <span>{prerequisiteTargetId === selectedNode.id ? 'DAG Ativo' : 'DAG'}</span>
           </button>
           <button
             type="button"
@@ -1312,30 +1351,6 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({ onNavigate }) => {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <label style={{ fontSize: '11px', color: textMuted }}>Pág:</label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={selectedNode.data.pdfAttachment.page || 1}
-                        onChange={(e) => {
-                          const val = Math.max(1, parseInt(e.target.value, 10) || 1)
-                          setPdfPage(selectedNode.id, val)
-                        }}
-                        aria-label="Página de referência do PDF"
-                        style={{
-                          width: '40px',
-                          background: inputBg,
-                          border: inputBorder,
-                          color: textColor,
-                          borderRadius: '3px',
-                          padding: '2px 4px',
-                          fontSize: '11px',
-                          textAlign: 'center',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '6px' }}>

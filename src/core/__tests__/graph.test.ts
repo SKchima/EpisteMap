@@ -6,7 +6,10 @@ import {
   getAncestorIds,
   getBacklinks,
   getBreadcrumbs,
+  getConsequenceSubgraph,
+  getPrerequisiteSubgraph,
   getSubtreeIds,
+  getTopologicalTourOrder,
   isNodeInsideBoundingBox,
   resolveColor,
   sanitizeGraph,
@@ -189,5 +192,66 @@ describe('sanitizeGraph', () => {
     expect(g.nodes[1].parentId).toBe('p')
     expect(Object.keys(g.nodes[1]).sort()).toEqual(['data', 'id', 'parentId', 'position'])
     expect(g.edges[0]).toEqual({ id: 'e', source: 'p', target: 'c', label: '' })
+  })
+})
+
+describe('DAG - Pré-requisitos, Consequências e Modo Tour', () => {
+  // Grafo:
+  // axioma (e1) -> definicao (e2) -> lema (e3) -> teorema
+  // outro_axioma (e4) -> lema
+  // teorema (e5) -> corolario
+  const dagNodes: KnowledgeNode[] = [
+    node('axioma', null, { title: 'Axioma de Peano' }),
+    node('outro_axioma', null, { title: 'Axioma da Escolha' }),
+    node('definicao', null, { title: 'Definição de Grupo' }),
+    node('lema', null, { title: 'Lema Fundamental' }),
+    node('teorema', null, { title: 'Grande Teorema' }),
+    node('corolario', null, { title: 'Corolário Imediato' }),
+    node('isolado', null, { title: 'Conceito Isolado' }),
+  ]
+  dagNodes[0].position = { x: 0, y: 0 }
+  dagNodes[1].position = { x: 50, y: 0 }
+  dagNodes[2].position = { x: 100, y: 0 }
+  dagNodes[3].position = { x: 200, y: 0 }
+  dagNodes[4].position = { x: 300, y: 0 }
+  dagNodes[5].position = { x: 400, y: 0 }
+  dagNodes[6].position = { x: 500, y: 0 }
+
+  const dagEdges = [
+    { id: 'e1', source: 'axioma', target: 'definicao', label: '' },
+    { id: 'e2', source: 'definicao', target: 'lema', label: '' },
+    { id: 'e3', source: 'lema', target: 'teorema', label: '' },
+    { id: 'e4', source: 'outro_axioma', target: 'lema', label: '' },
+    { id: 'e5', source: 'teorema', target: 'corolario', label: '' },
+  ]
+
+  it('getPrerequisiteSubgraph identifica todos os nós precursores transitivos e arestas que levam ao alvo', () => {
+    const res = getPrerequisiteSubgraph(dagEdges, 'teorema')
+    expect(res.nodeIds).toEqual(
+      new Set(['teorema', 'lema', 'definicao', 'axioma', 'outro_axioma'])
+    )
+    expect(res.edgeIds).toEqual(new Set(['e3', 'e2', 'e1', 'e4']))
+    expect(res.nodeIds.has('corolario')).toBe(false)
+    expect(res.nodeIds.has('isolado')).toBe(false)
+  })
+
+  it('getConsequenceSubgraph identifica todos os nós e arestas consequentes a partir da origem', () => {
+    const res = getConsequenceSubgraph(dagEdges, 'lema')
+    expect(res.nodeIds).toEqual(new Set(['lema', 'teorema', 'corolario']))
+    expect(res.edgeIds).toEqual(new Set(['e3', 'e5']))
+    expect(res.nodeIds.has('axioma')).toBe(false)
+  })
+
+  it('getTopologicalTourOrder ordena os nós respeitando dependências topológicas e priorizando menor X', () => {
+    const tour = getTopologicalTourOrder(dagNodes, dagEdges)
+    const tourIds = tour.map((n) => n.id)
+
+    expect(tourIds).toHaveLength(7)
+    // Axiomas e definições devem vir antes de lema
+    expect(tourIds.indexOf('axioma')).toBeLessThan(tourIds.indexOf('definicao'))
+    expect(tourIds.indexOf('definicao')).toBeLessThan(tourIds.indexOf('lema'))
+    expect(tourIds.indexOf('outro_axioma')).toBeLessThan(tourIds.indexOf('lema'))
+    expect(tourIds.indexOf('lema')).toBeLessThan(tourIds.indexOf('teorema'))
+    expect(tourIds.indexOf('teorema')).toBeLessThan(tourIds.indexOf('corolario'))
   })
 })

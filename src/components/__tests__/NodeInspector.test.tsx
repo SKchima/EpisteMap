@@ -250,5 +250,46 @@ describe('NodeInspector (Inspetor de Conhecimento)', () => {
       store.setEditorMode('edit')
     })
   })
+
+  it('deve alternar o destaque de pré-requisitos DAG ao clicar no botão DAG do cabeçalho', () => {
+    const store = useGraphStore.getState()
+    const nodeId = store.addRootNode('Teorema de Stokes')
+    store.select(nodeId)
+
+    render(<NodeInspector />)
+
+    const dagBtn = screen.getByRole('button', { name: /Alternar destaque de pré-requisitos DAG/i })
+    expect(dagBtn).toBeInTheDocument()
+    expect(dagBtn).toHaveTextContent('DAG')
+
+    fireEvent.click(dagBtn)
+    expect(useGraphStore.getState().prerequisiteTargetId).toBe(nodeId)
+    expect(dagBtn).toHaveTextContent('DAG Ativo')
+
+    fireEvent.click(dagBtn)
+    expect(useGraphStore.getState().prerequisiteTargetId).toBeNull()
+    expect(dagBtn).toHaveTextContent('DAG')
+  })
+
+  it('não deve exibir indicador de página (p.X) no botão de aba do PDF ou no cartão de resumo', () => {
+    const store = useGraphStore.getState()
+    const nodeId = store.addRootNode('Artigo com PDF')
+    store.attachPdf(nodeId, {
+      name: 'geometria.pdf',
+      base64: 'fake',
+      page: 42,
+    })
+    store.select(nodeId)
+
+    render(<NodeInspector />)
+
+    // O botão de aba deve conter 'PDF', e não 'PDF (p.42)'
+    const pdfTabBtn = screen.getByRole('button', { name: /^PDF$/i })
+    expect(pdfTabBtn).toBeInTheDocument()
+    expect(screen.queryByText(/PDF \(p\./i)).not.toBeInTheDocument()
+
+    // No cartão de resumo não deve existir input de 'Pág:'
+    expect(screen.queryByLabelText('Página de referência do PDF')).not.toBeInTheDocument()
+  })
 })
 

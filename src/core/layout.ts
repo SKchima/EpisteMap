@@ -1,7 +1,7 @@
 import dagre from '@dagrejs/dagre'
 import { MarkerType, type Node as RFNode, type Edge as RFEdge } from '@xyflow/react'
 import type { KnowledgeNode, KnowledgeEdge, Position, BoundingBox, ChildNodeSummary, ZoomLodLevel } from './types'
-import { getAncestorIds, getSubtreeIds, resolveColor, canReparent, isNodeInsideBoundingBox } from './graph'
+import { getAncestorIds, getSubtreeIds, resolveColor, canReparent, isNodeInsideBoundingBox, getPrerequisiteSubgraph } from './graph'
 
 export const LEAF_WIDTH = 232
 export const LEAF_HEIGHT = 224
@@ -168,6 +168,8 @@ export type BuildFlowOptions = {
   dropTargetId?: string | null
   activeTag?: string | null
   lodLevel?: ZoomLodLevel
+  prerequisiteTargetId?: string | null
+  tourActiveNodeId?: string | null
 }
 
 export function buildFlowElements(
@@ -175,7 +177,18 @@ export function buildFlowElements(
   edges: KnowledgeEdge[],
   options: BuildFlowOptions
 ): { flowNodes: RFNode[]; flowEdges: RFEdge[] } {
-  const { focusId, selectedId, dropTargetId = null, activeTag = null, lodLevel = 'standard' } = options
+  const {
+    focusId,
+    selectedId,
+    dropTargetId = null,
+    activeTag = null,
+    lodLevel = 'standard',
+    prerequisiteTargetId = null,
+    tourActiveNodeId = null,
+  } = options
+  const dagPrereqs = prerequisiteTargetId
+    ? getPrerequisiteSubgraph(edges, prerequisiteTargetId)
+    : null
   const sizes = computeNodeSizes(nodes, edges, focusId)
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
@@ -294,13 +307,27 @@ export function buildFlowElements(
     }))
     const color = resolveColor(nodes, n.id)
 
+    const isPrerequisiteTarget =
+      prerequisiteTargetId !== null && n.id === prerequisiteTargetId
+    const isPrerequisitePrecursor =
+      dagPrereqs !== null && dagPrereqs.nodeIds.has(n.id) && !isPrerequisiteTarget
+    const isTourCurrentStep =
+      tourActiveNodeId !== null && n.id === tourActiveNodeId
+
     let isDimmed = false
     if (activeTag) {
       const subtreeIds = getSubtreeIds(nodes, n.id)
       const hasTagInSubtree = nodes.some(
         (cand) => subtreeIds.has(cand.id) && cand.data.tags.includes(activeTag)
       )
-      isDimmed = !hasTagInSubtree
+      if (!hasTagInSubtree) isDimmed = true
+    }
+    if (dagPrereqs) {
+      const subtreeIds = getSubtreeIds(nodes, n.id)
+      const hasPrereqInSubtree = Array.from(subtreeIds).some((id) =>
+        dagPrereqs.nodeIds.has(id)
+      )
+      if (!hasPrereqInSubtree) isDimmed = true
     }
 
     flowNodes.push({
@@ -326,6 +353,9 @@ export function buildFlowElements(
         isContainer: childrenCount > 0 && !isNodeCollapsed,
         isDropTarget: dropTargetId === n.id,
         isDimmed,
+        isPrerequisiteTarget,
+        isPrerequisitePrecursor,
+        isTourCurrentStep,
         pdfAttachment: n.data.pdfAttachment,
         width: size.width,
         height: size.height,
@@ -360,7 +390,32 @@ export function buildFlowElements(
 
     const isElevated = sourceVis !== edge.source || targetVis !== edge.target
     const isEdgeSelected = edge.id === selectedId
-    const strokeColor = isEdgeSelected ? '#38bdf8' : isElevated ? '#64748b' : '#6366f1'
+    const isPrereqEdge = dagPrereqs !== null && dagPrereqs.edgeIds.has(edge.id)
+
+    const strokeColor = isEdgeSelected
+      ? '#38bdf8'
+      : isPrereqEdge
+        ? '#f59e0b'
+        : isElevated
+          ? '#64748b'
+          : '#6366f1'
+
+    let edgeOpacity = 1
+    if (dagPrereqs) {
+      edgeOpacity = isPrereqEdge ? 1 : 0.15
+    } else if (activeTag) {
+      const sourceSub = getSubtreeIds(nodes, edge.source)
+      const targetSub = getSubtreeIds(nodes, edge.target)
+      const sourceHasTag = nodes.some(
+        (cand) => sourceSub.has(cand.id) && cand.data.tags.includes(activeTag)
+      )
+      const targetHasTag = nodes.some(
+        (cand) => targetSub.has(cand.id) && cand.data.tags.includes(activeTag)
+      )
+      if (!sourceHasTag || !targetHasTag) {
+        edgeOpacity = 0.15
+      }
+    }
 
     flowEdges.push({
       id: edge.id,
@@ -368,23 +423,26 @@ export function buildFlowElements(
       target: targetVis,
       label: edge.label,
       selected: isEdgeSelected,
-      animated: isElevated,
+      animated: isElevated || isPrereqEdge,
       labelStyle: {
         fill: '#e2e8f0',
         fontSize: 11,
         fontWeight: 500,
+        opacity: edgeOpacity,
       },
       labelBgStyle: {
         fill: '#151822',
-        stroke: isEdgeSelected ? '#38bdf8' : '#2d3448',
+        stroke: isEdgeSelected ? '#38bdf8' : isPrereqEdge ? '#f59e0b' : '#2d3448',
         strokeWidth: 1,
+        opacity: edgeOpacity,
       },
       labelBgPadding: [4, 6],
       labelBgBorderRadius: 4,
       style: {
         stroke: strokeColor,
-        strokeWidth: isEdgeSelected ? 3 : 2,
+        strokeWidth: isEdgeSelected ? 3 : isPrereqEdge ? 2.5 : 2,
         strokeDasharray: isElevated ? '5,5' : undefined,
+        opacity: edgeOpacity,
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,

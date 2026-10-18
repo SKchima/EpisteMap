@@ -307,4 +307,71 @@ describe('distribuição espacial e auto-layout Dagre', () => {
     // Altura se estende verticalmente para baixo para acomodar o texto
     expect(s2.height).toBeGreaterThan(s1.height)
   })
+
+  it('destaca caminho de pré-requisitos DAG e esmaece nós e arestas não relacionados', () => {
+    const nodes = [
+      makeNode('axioma', null, { title: 'Axioma' }),
+      makeNode('lema', null, { title: 'Lema' }),
+      makeNode('teorema', null, { title: 'Teorema' }),
+      makeNode('alheio', null, { title: 'Conceito Alheio' }),
+    ]
+    const edges = [
+      { id: 'e1', source: 'axioma', target: 'lema', label: '' },
+      { id: 'e2', source: 'lema', target: 'teorema', label: '' },
+      { id: 'e3', source: 'axioma', target: 'alheio', label: '' }, // Aresta que não é pré-requisito de teorema
+    ]
+
+    const { flowNodes, flowEdges } = buildFlowElements(nodes, edges, {
+      focusId: null,
+      selectedId: null,
+      prerequisiteTargetId: 'teorema',
+    })
+
+    const teoremaNode = flowNodes.find((n) => n.id === 'teorema')!
+    const lemaNode = flowNodes.find((n) => n.id === 'lema')!
+    const alheioNode = flowNodes.find((n) => n.id === 'alheio')!
+
+    expect(teoremaNode.data.isPrerequisiteTarget).toBe(true)
+    expect(teoremaNode.data.isDimmed).toBe(false)
+
+    expect(lemaNode.data.isPrerequisitePrecursor).toBe(true)
+    expect(lemaNode.data.isDimmed).toBe(false)
+
+    expect(alheioNode.data.isDimmed).toBe(true)
+
+    const e1 = flowEdges.find((e) => e.id === 'e1')!
+    const e2 = flowEdges.find((e) => e.id === 'e2')!
+    const e3 = flowEdges.find((e) => e.id === 'e3')!
+
+    expect(e1.style?.opacity).toBe(1)
+    expect(e1.animated).toBe(true)
+    expect(e2.style?.opacity).toBe(1)
+    expect(e2.animated).toBe(true)
+
+    expect(e3.style?.opacity).toBe(0.15)
+  })
+
+  it('esmaece arestas quando conectadas a nós fora da tag ativa', () => {
+    const nodes = [
+      makeNode('n1', null, { tags: ['algebra'] }),
+      makeNode('n2', null, { tags: ['algebra'] }),
+      makeNode('n3', null, { tags: ['geometria'] }),
+    ]
+    const edges = [
+      { id: 'e1', source: 'n1', target: 'n2', label: '' },
+      { id: 'e2', source: 'n2', target: 'n3', label: '' },
+    ]
+
+    const { flowEdges } = buildFlowElements(nodes, edges, {
+      focusId: null,
+      selectedId: null,
+      activeTag: 'algebra',
+    })
+
+    const e1 = flowEdges.find((e) => e.id === 'e1')!
+    const e2 = flowEdges.find((e) => e.id === 'e2')!
+
+    expect(e1.style?.opacity).toBe(1)
+    expect(e2.style?.opacity).toBe(0.15)
+  })
 })

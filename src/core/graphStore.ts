@@ -7,12 +7,28 @@ import {
   canReparent,
   sanitizeGraph,
   findNodeByTitle,
+  getTopologicalTourOrder,
 } from './graph'
 import { findFreePosition, applyDagreLayout } from './layout'
 
 const THEME_STORAGE_KEY = 'epistemap:theme'
 const INSPECTOR_STORAGE_KEY = 'epistemap:inspector-open'
 const EDITOR_MODE_STORAGE_KEY = 'epistemap:editor-mode'
+const MINIMAP_STORAGE_KEY = 'epistemap:minimap-open'
+
+export function getInitialMinimapOpen(): boolean {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(MINIMAP_STORAGE_KEY)
+      if (saved !== null) {
+        return saved === 'true'
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return true
+}
 
 export function getInitialEditorMode(): EditorMode {
   try {
@@ -125,6 +141,10 @@ export const useGraphStore = create<EpistemapStore>()(
       theme: getInitialTheme(),
       editorMode: getInitialEditorMode(),
       isInspectorOpen: getInitialInspectorOpen(),
+      isMinimapOpen: getInitialMinimapOpen(),
+      prerequisiteTargetId: null,
+      isTourActive: false,
+      tourStepIndex: 0,
       canUndo: false,
       canRedo: false,
 
@@ -708,6 +728,83 @@ export const useGraphStore = create<EpistemapStore>()(
           // ignore
         }
         set({ editorMode: next })
+      },
+
+      toggleMinimap: () => {
+        const next = !get().isMinimapOpen
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(MINIMAP_STORAGE_KEY, String(next))
+          }
+        } catch {
+          // ignore
+        }
+        set({ isMinimapOpen: next })
+      },
+
+      setMinimapOpen: (open: boolean) => {
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(MINIMAP_STORAGE_KEY, String(open))
+          }
+        } catch {
+          // ignore
+        }
+        set({ isMinimapOpen: open })
+      },
+
+      togglePrerequisitesHighlight: (nodeId: string | null) => {
+        set((state) => ({
+          prerequisiteTargetId: state.prerequisiteTargetId === nodeId ? null : nodeId,
+        }))
+      },
+
+      startTour: () => {
+        const state = get()
+        if (state.nodes.length === 0) return
+        const ordered = getTopologicalTourOrder(state.nodes, state.edges)
+        const firstNode = ordered[0]
+        set({
+          isTourActive: true,
+          tourStepIndex: 0,
+          selectedId: firstNode ? firstNode.id : null,
+          prerequisiteTargetId: null,
+        })
+      },
+
+      endTour: () => {
+        set({
+          isTourActive: false,
+          tourStepIndex: 0,
+        })
+      },
+
+      nextTourStep: () => {
+        const state = get()
+        if (!state.isTourActive || state.nodes.length === 0) return
+        const ordered = getTopologicalTourOrder(state.nodes, state.edges)
+        if (state.tourStepIndex < ordered.length - 1) {
+          const nextIndex = state.tourStepIndex + 1
+          const targetNode = ordered[nextIndex]
+          set({
+            tourStepIndex: nextIndex,
+            selectedId: targetNode ? targetNode.id : state.selectedId,
+          })
+        }
+      },
+
+      prevTourStep: () => {
+        const state = get()
+        if (!state.isTourActive || state.nodes.length === 0) return
+        const ordered = getTopologicalTourOrder(state.nodes, state.edges)
+        if (state.tourStepIndex > 0) {
+          const prevIndex = state.tourStepIndex - 1
+          const targetNode = ordered[prevIndex]
+          set({
+            tourStepIndex: prevIndex,
+            selectedId: targetNode ? targetNode.id : state.selectedId,
+          })
+        }
       },
 
       undo: () => {

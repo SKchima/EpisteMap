@@ -110,6 +110,21 @@ export interface EpistemapStore {
   isInspectorOpen: boolean
   toggleInspector: () => void
   setInspectorOpen: (open: boolean) => void
+  isMinimapOpen: boolean
+  toggleMinimap: () => void
+  setMinimapOpen: (open: boolean) => void
+
+  // Destaque de Trilha DAG (Pré-requisitos e Caminho Crítico)
+  prerequisiteTargetId: string | null
+  togglePrerequisitesHighlight: (nodeId: string | null) => void
+
+  // Modo Tour / Apresentação Guiada
+  isTourActive: boolean
+  tourStepIndex: number
+  startTour: () => void
+  endTour: () => void
+  nextTourStep: () => void
+  prevTourStep: () => void
 
   // Histórico (Undo/Redo via Zundo)
   undo: () => void

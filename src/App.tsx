@@ -36,6 +36,8 @@ import { NodeInspector } from './components/NodeInspector'
 import { CommandPalette } from './components/CommandPalette'
 import { SettingsModal, type SettingsTab } from './components/SettingsModal'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { TourBar } from './components/TourBar'
+import { Compass } from 'lucide-react'
 
 const STORAGE_KEY_V2 = 'epistemap:v2'
 const STORAGE_KEY_V1 = 'epistemap_state_v1'
@@ -62,8 +64,11 @@ const EpistemapCanvas: React.FC = () => {
   const toggleInspector = useGraphStore((s) => s.toggleInspector)
   const editorMode = useGraphStore((s) => s.editorMode)
   const toggleEditorMode = useGraphStore((s) => s.toggleEditorMode)
+  const isMinimapOpen = useGraphStore((s) => s.isMinimapOpen)
+  const toggleMinimap = useGraphStore((s) => s.toggleMinimap)
+  const prerequisiteTargetId = useGraphStore((s) => s.prerequisiteTargetId)
 
-  const { screenToFlowPosition, fitView } = useReactFlow()
+  const { screenToFlowPosition, fitView, setCenter } = useReactFlow()
 
   // Nível de detalhe do zoom da câmera para projeção de nós
   const lodLevel = useStore(
@@ -138,8 +143,22 @@ const EpistemapCanvas: React.FC = () => {
       dropTargetId,
       activeTag,
       lodLevel,
+      prerequisiteTargetId,
     })
-  }, [nodes, edges, focusId, selectedId, dropTargetId, activeTag, lodLevel])
+  }, [nodes, edges, focusId, selectedId, dropTargetId, activeTag, lodLevel, prerequisiteTargetId])
+
+  const handleTourStepChange = useCallback(
+    (nodeId: string) => {
+      const boxes = computeNodeBoundingBoxes(flowNodes)
+      const box = boxes.get(nodeId)
+      if (box) {
+        const centerX = box.x + box.width / 2
+        const centerY = box.y + box.height / 2
+        setCenter(centerX, centerY, { zoom: 1.05, duration: 600 })
+      }
+    },
+    [flowNodes, setCenter]
+  )
 
   // Sobrepõe coordenadas efêmeras durante arraste para que nós controlados se movam suavemente
   const renderedFlowNodes = useMemo(() => {
@@ -428,6 +447,13 @@ const EpistemapCanvas: React.FC = () => {
         return
       }
 
+      // M: Alternar visibilidade do Minimapa
+      if ((e.key === 'm' || e.key === 'M') && !isMod && !e.altKey) {
+        e.preventDefault()
+        toggleMinimap()
+        return
+      }
+
       if (isSearchOpen || pendingDeleteNodeId) return
 
       // Em Modo de Visualização, atalhos de mutação do grafo são desativados
@@ -493,6 +519,7 @@ const EpistemapCanvas: React.FC = () => {
     removeEdge,
     removeNode,
     toggleInspector,
+    toggleMinimap,
     editorMode,
     toggleEditorMode,
   ])
@@ -574,6 +601,8 @@ const EpistemapCanvas: React.FC = () => {
             ]
               .filter(Boolean)
               .join(' ') || undefined}
+            snapToGrid={editorMode === 'edit'}
+            snapGrid={[16, 16]}
             zoomOnDoubleClick={false}
             deleteKeyCode={null}
             fitView
@@ -592,18 +621,53 @@ const EpistemapCanvas: React.FC = () => {
                 fill: controlsFill,
               }}
             />
-            <MiniMap
-              nodeColor={(n) =>
-                isHighContrast ? '#000000' : (n.data as { color?: string })?.color || '#4f46e5'
-              }
-              maskColor={minimapMask}
-              style={{
-                backgroundColor: minimapBg,
-                border: minimapBorder,
-                borderRadius: '6px',
-              }}
-            />
+            {isMinimapOpen && (
+              <MiniMap
+                nodeColor={(n) =>
+                  isHighContrast ? '#000000' : (n.data as { color?: string })?.color || '#4f46e5'
+                }
+                maskColor={minimapMask}
+                style={{
+                  backgroundColor: minimapBg,
+                  border: minimapBorder,
+                  borderRadius: '6px',
+                }}
+              />
+            )}
           </ReactFlow>
+
+          {/* Botão de Alternar Minimapa (Radar) */}
+          <button
+            type="button"
+            onClick={toggleMinimap}
+            title={isMinimapOpen ? 'Recolher Minimapa (M)' : 'Exibir Minimapa (M)'}
+            aria-label={isMinimapOpen ? 'Recolher minimapa' : 'Exibir minimapa'}
+            style={{
+              position: 'absolute',
+              bottom: isMinimapOpen ? '170px' : '16px',
+              right: '16px',
+              zIndex: 20,
+              background: controlsBg,
+              border: controlsBorder,
+              borderRadius: '6px',
+              padding: '5px 8px',
+              color: isHighContrast ? '#000000' : isLight ? '#0f172a' : '#cbd5e1',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '11px',
+              fontWeight: 500,
+              boxShadow: isHighContrast ? 'none' : '0 2px 8px rgba(0,0,0,0.2)',
+              transition: 'bottom 0.2s ease',
+            }}
+          >
+            <Compass size={13} color={isHighContrast ? '#000000' : '#818cf8'} />
+            <span>{isMinimapOpen ? 'Ocultar Radar' : 'Minimapa'}</span>
+          </button>
+
+          {/* HUD do Modo Tour / Apresentação Guiada */}
+          <TourBar onStepChange={handleTourStepChange} />
         </div>
 
         <NodeInspector onNavigate={handleSearchNavigate} />

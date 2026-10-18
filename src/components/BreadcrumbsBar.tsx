@@ -58,6 +58,9 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   const toggleInspector = useGraphStore((s) => s.toggleInspector)
   const editorMode = useGraphStore((s) => s.editorMode)
   const setEditorMode = useGraphStore((s) => s.setEditorMode)
+  const isTourActive = useGraphStore((s) => s.isTourActive)
+  const startTour = useGraphStore((s) => s.startTour)
+  const endTour = useGraphStore((s) => s.endTour)
 
   const [isExportingImage, setIsExportingImage] = useState(false)
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false)
@@ -519,6 +522,34 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             <span>Visualização</span>
           </button>
         </div>
+
+        {/* Modo Apresentação / Trilha Guiada (Tour Mode) */}
+        <button
+          type="button"
+          onClick={() => (isTourActive ? endTour() : startTour())}
+          title={isTourActive ? 'Encerrar Modo Apresentação (Esc)' : 'Iniciar Modo Apresentação / Trilha Guiada'}
+          aria-pressed={isTourActive}
+          style={{
+            background: isTourActive
+              ? isHighContrast
+                ? '#000000'
+                : '#4f46e5'
+              : btnBg,
+            color: isTourActive ? '#ffffff' : textColor,
+            border: btnBorder,
+            borderRadius: '5px',
+            padding: '4px 9px',
+            fontSize: '11px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>{isTourActive ? 'Sair do Tour' : 'Apresentação'}</span>
+        </button>
 
         {/* Divisor Semântico */}
         <div style={{ width: '1px', height: '18px', backgroundColor: dividerColor }} />

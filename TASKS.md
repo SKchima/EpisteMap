@@ -111,6 +111,28 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
   - Gerenciamento completo, edição e filtragem de tags preservados no Inspetor de Conhecimento ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)), na busca global (`Cmd+K`) e no filtro da barra superior ([BreadcrumbsBar.tsx](file:///home/kchima/repos/epistemap/src/components/BreadcrumbsBar.tsx)).
   - Testes em [CompoundNode.test.tsx](file:///home/kchima/repos/epistemap/src/components/__tests__/CompoundNode.test.tsx) atualizados (161 testes aprovados, 0 erros no Oxlint).
 
+- [x] **Fase 18 - Implementações Completas de UI/UX, DAG e Navegação**:
+  - **Trilha de Pré-requisitos & Caminho Crítico (DAG Highlighting)**:
+    - Motor algorítmico `getPrerequisiteSubgraph` e `getConsequenceSubgraph` em [graph.ts](file:///home/kchima/repos/epistemap/src/core/graph.ts) com busca reversa e direta em grafos direcionados.
+    - Destaque visual com borda dourada/âmbar (`#f59e0b`), anel de brilho (*glow*) e badges semânticas `[Alvo DAG]` e `[Pré-requisito]` nos cartões do canvas ([CompoundNode.tsx](file:///home/kchima/repos/epistemap/src/components/CompoundNode.tsx)).
+    - Arestas do caminho de pré-requisito animadas com traço espesso dourado, e esmaecimento com opacidade de 15% em todos os nós e arestas não relacionados ([layout.ts](file:///home/kchima/repos/epistemap/src/core/layout.ts)).
+    - Botão de alternância tátil `[DAG]` / `[DAG Ativo]` integrado no Inspetor de Conhecimento ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)) ao lado do botão de foco.
+  - **Modo Apresentação / Trilha Guiada (Tour Mode)**:
+    - Ordenação topológica inteligente (`getTopologicalTourOrder`) priorizando a precedência conceitual e distribuição espacial esquerda-para-direita.
+    - HUD flutuante minimalista ([TourBar.tsx](file:///home/kchima/repos/epistemap/src/components/TourBar.tsx)) com contador de passos `Passo X de Y`, título do nó, navegação sequencial e atalhos de teclado (`←`, `→`, `Esc`).
+    - Câmera suave com animação fluida de centralização no canvas do React Flow ao avançar e retroceder passos ([App.tsx](file:///home/kchima/repos/epistemap/src/App.tsx)).
+    - Botão textual limpo `[Apresentação]` / `[Sair do Tour]` na barra superior ([BreadcrumbsBar.tsx](file:///home/kchima/repos/epistemap/src/components/BreadcrumbsBar.tsx)).
+  - **Minimapa Flutuante Translúcido (Overview Radar)**:
+    - Radar recolhível com cantos arredondados, backdrop-filter de vidro e máscara translúcida no canto inferior direito do canvas ([App.tsx](file:///home/kchima/repos/epistemap/src/App.tsx)).
+    - Botão de alternância com ícone de bússola, atalho de teclado `M` e persistência em `localStorage('epistemap:minimap-open')`.
+  - **Filtro de Destaque no Canvas por Tag / Tipo**:
+    - Ao selecionar uma tag no filtro da barra superior, os nós que não contêm a tag ativa e as arestas que não conectam nós filtrados são esmaecidos a 15% de opacidade e filtro grayscale ([layout.ts](file:///home/kchima/repos/epistemap/src/core/layout.ts)), isolando o subconjunto de interesse sem ocultar a geometria global do mapa.
+  - **Guias Magnéticas de Alinhamento (Smart Guides / Snap)**:
+    - Grade magnética de 16px ativada dinamicamente durante o modo de edição (`snapToGrid={editorMode === 'edit'}`, `snapGrid={[16, 16]}`) em [App.tsx](file:///home/kchima/repos/epistemap/src/App.tsx), garantindo encaixe limpo e alinhamento métrico entre cartões.
+  - **Remoção Completa do Indicador de Páginas no Mapa e no Inspetor**:
+    - Eliminado o texto `(p.X)` do botão de aba do leitor PDF e removido o seletor redundante de página no resumo do cartão de anexo ([NodeInspector.tsx](file:///home/kchima/repos/epistemap/src/components/NodeInspector.tsx)), mantendo o controle de páginas estritamente confinado ao visualizador de PDF ([PdfViewerPanel.tsx](file:///home/kchima/repos/epistemap/src/components/PdfViewerPanel.tsx)).
+  - Suíte de 175 testes automatizados aprovada (15 arquivos) e 0 erros no Oxlint.
+
 ### [/] Em Andamento
 
 - _(Nenhuma tarefa pendente no momento)_
@@ -124,13 +146,13 @@ Este documento é a **Única Fonte da Verdade (Single Source of Truth)** para o 
 - [ ] **Live Sync com Compêndio LaTeX via SyncTeX**: Sincronização automática em segundo plano (`epistemap dev`) ao recompilar documentos LaTeX com `latexmk`.
 
 #### Modelagem Matemática & Grafo de Conhecimento (DAG)
-- [ ] **Trilha de Pré-requisitos & Caminho Crítico (DAG Highlighting)**: Realce com brilho (*glow*) de todos os axiomas, definições e lemas precursores necessários para demonstrar um teorema selecionado, esmaecendo nós não relacionados.
+- [x] **Trilha de Pré-requisitos & Caminho Crítico (DAG Highlighting)**: Realce com brilho (*glow*) de todos os axiomas, definições e lemas precursores necessários para demonstrar um teorema selecionado, esmaecendo nós não relacionados.
 - [ ] **Tipagem Semântica Formal de Arestas**: Estilos geométricos específicos para relações formais ($\implies$ dedução, $\iff$ equivalência, generalização/herança e dependência fraca).
 - [ ] **Detector de Ciclos em Pré-requisitos**: Validação em tempo real para impedir dependências circulares em cadeias de pré-requisitos lógicos.
 
 #### Ergonomia de Estudo, Navegação & Canvas
-- [ ] **Modo Apresentação / Trilha Guiada (Tour Mode)**: Percorrer conceitos em sequência ordenada ($1 \to 2 \to 3$) com setas do teclado (`←` e `→`) e animação suave de câmera.
-- [ ] **Minimapa Flutuante Translúcido (Overview Radar)**: Radar recolhível no canto inferior para navegação ágil em mapas extensos.
-- [ ] **Filtro de Destaque no Canvas por Tag / Tipo**: Nós fora do filtro ativo recebem opacidade reduzida (15%), isolando visualmente subconjuntos de conceitos (ex: apenas `#teorema`).
-- [ ] **Guias Magnéticas de Alinhamento (Smart Guides / Snap)**: Alinhamento automático e guias inteligentes durante o arrasto manual de conceitos raiz.
-- [ ] **Remoção Completa do Indicador de Páginas no Mapa e no Inspetor**: Auditar e eliminar definitivamente todos os resquícios do indicador de página de anexos PDF (como badges `p.X`, referências de página e contadores no mapa e no cabeçalho do Inspetor), mantendo o controle de páginas restrito e focado exclusivamente ao interior do leitor de PDF embutido.
+- [x] **Modo Apresentação / Trilha Guiada (Tour Mode)**: Percorrer conceitos em sequência ordenada ($1 \to 2 \to 3$) com setas do teclado (`←` e `→`) e animação suave de câmera.
+- [x] **Minimapa Flutuante Translúcido (Overview Radar)**: Radar recolhível no canto inferior para navegação ágil em mapas extensos.
+- [x] **Filtro de Destaque no Canvas por Tag / Tipo**: Nós fora do filtro ativo recebem opacidade reduzida (15%), isolando visualmente subconjuntos de conceitos (ex: apenas `#teorema`).
+- [x] **Guias Magnéticas de Alinhamento (Smart Guides / Snap)**: Alinhamento automático e guias inteligentes durante o arrasto manual de conceitos raiz.
+- [x] **Remoção Completa do Indicador de Páginas no Mapa e no Inspetor**: Auditar e eliminar definitivamente todos os resquícios do indicador de página de anexos PDF (como badges `p.X`, referências de página e contadores no mapa e no cabeçalho do Inspetor), mantendo o controle de páginas restrito e focado exclusivamente ao interior do leitor de PDF embutido.

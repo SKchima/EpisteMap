@@ -229,4 +229,81 @@ describe('CompoundNode - Zoom Semântico por Nível de Detalhe (LoD)', () => {
     expect(screen.queryByText(/p\.14/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/p\.1/i)).not.toBeInTheDocument()
   })
+
+  it('deve renderizar badges de destaque de pré-requisitos DAG e passo do tour', () => {
+    const nodeProps = {
+      id: 'node-dag',
+      data: {
+        title: 'Teorema de Gödel',
+        description: '',
+        tags: ['logica'],
+        collapsed: false,
+        color: '#6366f1',
+        childCount: 0,
+        isContainer: false,
+        width: 232,
+        height: 224,
+        lodLevel: 'standard' as const,
+        isPrerequisiteTarget: true,
+        isTourCurrentStep: true,
+      },
+      selected: false,
+      zIndex: 1,
+      isConnectable: true,
+      positionAbsoluteX: 0,
+      positionAbsoluteY: 0,
+      dragging: false,
+      deletable: true,
+      selectable: true,
+      draggable: true,
+      type: 'compound',
+    }
+
+    render(
+      <ReactFlowProvider>
+        <CompoundNode {...nodeProps} />
+      </ReactFlowProvider>
+    )
+
+    expect(screen.getByText('Passo Atual')).toBeInTheDocument()
+    expect(screen.getByText('Alvo DAG')).toBeInTheDocument()
+  })
+
+  it('deve aplicar opacidade reduzida e escala de cinza quando nó estiver esmaecido (isDimmed)', () => {
+    const nodeProps = {
+      id: 'node-dimmed',
+      data: {
+        title: 'Geometria Riemanniana',
+        description: '',
+        tags: ['geometria'],
+        collapsed: false,
+        color: '#6366f1',
+        childCount: 0,
+        isContainer: false,
+        width: 232,
+        height: 224,
+        lodLevel: 'standard' as const,
+        isDimmed: true,
+      },
+      selected: false,
+      zIndex: 1,
+      isConnectable: true,
+      positionAbsoluteX: 0,
+      positionAbsoluteY: 0,
+      dragging: false,
+      deletable: true,
+      selectable: true,
+      draggable: true,
+      type: 'compound',
+    }
+
+    const { container } = render(
+      <ReactFlowProvider>
+        <CompoundNode {...nodeProps} />
+      </ReactFlowProvider>
+    )
+
+    const innerCard = container.querySelector('.compound-node-inner') as HTMLElement
+    expect(innerCard).toHaveStyle({ opacity: '0.15' })
+  })
 })

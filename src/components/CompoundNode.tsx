@@ -16,6 +16,9 @@ type CompoundNodeData = {
   childrenSummary?: ChildNodeSummary[]
   isDropTarget?: boolean
   isDimmed?: boolean
+  isPrerequisiteTarget?: boolean
+  isPrerequisitePrecursor?: boolean
+  isTourCurrentStep?: boolean
   pdfAttachment?: PdfAttachment | null
   width: number
   height: number
@@ -46,6 +49,9 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
   const isCollapsed = Boolean(nodeData.collapsed)
   const isDropTarget = Boolean(nodeData.isDropTarget)
   const isDimmed = Boolean(nodeData.isDimmed)
+  const isPrerequisiteTarget = Boolean(nodeData.isPrerequisiteTarget)
+  const isPrerequisitePrecursor = Boolean(nodeData.isPrerequisitePrecursor)
+  const isTourCurrentStep = Boolean(nodeData.isTourCurrentStep)
   const accentColor = isHighContrast ? '#000000' : nodeData.color || '#6366f1'
   const handleColor = isHighContrast ? '#000000' : accentColor
   const childrenSummary = nodeData.childrenSummary || []
@@ -83,18 +89,28 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
       ? '3px dashed #000000'
       : selected
         ? '3px solid #000000'
-        : '2px solid #000000'
+        : isTourCurrentStep || isPrerequisiteTarget
+          ? '3px solid #000000'
+          : isPrerequisitePrecursor
+            ? '2px dashed #000000'
+            : '2px solid #000000'
     : isDropTarget
       ? '2px solid #10b981'
       : selected
         ? `2px solid ${accentColor}`
-        : isLight
-          ? isContainer
-            ? '1.5px dashed rgba(99, 102, 241, 0.45)'
-            : '1px solid #cbd5e1'
-          : isContainer
-            ? '1.5px dashed rgba(79, 70, 229, 0.35)'
-            : '1px solid #2d3345'
+        : isTourCurrentStep
+          ? '2px solid #818cf8'
+          : isPrerequisiteTarget
+            ? '2px solid #38bdf8'
+            : isPrerequisitePrecursor
+              ? '2px solid #f59e0b'
+              : isLight
+                ? isContainer
+                  ? '1.5px dashed rgba(99, 102, 241, 0.45)'
+                  : '1px solid #cbd5e1'
+                : isContainer
+                  ? '1.5px dashed rgba(79, 70, 229, 0.35)'
+                  : '1px solid #2d3345'
 
   const cardTextColor = isHighContrast ? '#000000' : isLight ? '#0f172a' : '#e2e8f0'
   const cardTitleColor = isHighContrast ? '#000000' : isLight ? '#0f172a' : '#f8fafc'
@@ -135,21 +151,88 @@ export const CompoundNode = memo(({ id, data, selected }: NodeProps) => {
           ? 'none'
           : isDropTarget
             ? '0 0 22px rgba(16, 185, 129, 0.55), inset 0 0 12px rgba(16, 185, 129, 0.15)'
-            : selected
-              ? `0 0 14px ${accentColor}40`
-              : isLight
-                ? '0 2px 4px rgba(0, 0, 0, 0.06)'
-                : '0 4px 6px -1px rgba(0, 0, 0, 0.25)',
+            : isTourCurrentStep
+              ? '0 0 26px rgba(129, 140, 248, 0.65), inset 0 0 10px rgba(129, 140, 248, 0.2)'
+              : isPrerequisiteTarget
+                ? '0 0 22px rgba(56, 189, 248, 0.55)'
+                : isPrerequisitePrecursor
+                  ? '0 0 16px rgba(245, 158, 11, 0.4)'
+                  : selected
+                    ? `0 0 14px ${accentColor}40`
+                    : isLight
+                      ? '0 2px 4px rgba(0, 0, 0, 0.06)'
+                      : '0 4px 6px -1px rgba(0, 0, 0, 0.25)',
         padding: isContainer ? '10px 14px' : '10px 12px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: isContainer ? 'flex-start' : 'space-between',
         cursor: 'pointer',
-        opacity: isDimmed ? 0.32 : 1,
+        opacity: isDimmed ? 0.15 : 1,
+        filter: isDimmed ? 'grayscale(70%)' : 'none',
         transition: 'border 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease, background-color 0.15s ease',
         position: 'relative',
       }}
     >
+      {/* Badges de Destaque Semântico (DAG / Tour) */}
+      {(isPrerequisiteTarget || isPrerequisitePrecursor || isTourCurrentStep) && (
+        <div style={{ position: 'absolute', top: '-10px', left: '10px', display: 'flex', gap: '4px', zIndex: 2 }}>
+          {isTourCurrentStep && (
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                background: isHighContrast ? '#000000' : '#4f46e5',
+                color: '#ffffff',
+                border: isHighContrast ? '1px solid #000' : 'none',
+                boxShadow: isHighContrast ? 'none' : '0 2px 6px rgba(79, 70, 229, 0.4)',
+              }}
+            >
+              Passo Atual
+            </span>
+          )}
+          {isPrerequisiteTarget && (
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                background: isHighContrast ? '#000000' : '#0284c7',
+                color: '#ffffff',
+                border: isHighContrast ? '1px solid #000' : 'none',
+                boxShadow: isHighContrast ? 'none' : '0 2px 6px rgba(2, 132, 199, 0.4)',
+              }}
+            >
+              Alvo DAG
+            </span>
+          )}
+          {isPrerequisitePrecursor && (
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                background: isHighContrast ? '#000000' : '#d97706',
+                color: '#ffffff',
+                border: isHighContrast ? '1px solid #000' : 'none',
+                boxShadow: isHighContrast ? 'none' : '0 2px 6px rgba(217, 119, 6, 0.4)',
+              }}
+            >
+              Pré-requisito
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Indicador visual de Drop Target */}
       {!isViewMode && isDropTarget && (
         <div

@@ -137,4 +137,20 @@ describe('BreadcrumbsBar (Barra Superior de Navegação, Tags, Histórico e Expo
     expect(screen.queryByRole('menuitem', { name: /Importar \.tex/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: /Importar JSON/i })).not.toBeInTheDocument()
   })
+
+  it('deve permitir iniciar e encerrar o tour guiado pelo botão Apresentação', () => {
+    const store = useGraphStore.getState()
+    store.addRootNode('Conceito 1')
+    render(<BreadcrumbsBar />)
+
+    const tourBtn = screen.getByRole('button', { name: /Apresentação/i })
+    expect(tourBtn).toBeInTheDocument()
+
+    fireEvent.click(tourBtn)
+    expect(useGraphStore.getState().isTourActive).toBe(true)
+
+    expect(screen.getByRole('button', { name: /Sair do Tour/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Sair do Tour/i }))
+    expect(useGraphStore.getState().isTourActive).toBe(false)
+  })
 })
